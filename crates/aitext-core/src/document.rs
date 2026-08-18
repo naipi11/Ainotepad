@@ -3,6 +3,7 @@ use ropey::Rope;
 use crate::selection::{Offset, Selection};
 use crate::motion::{Motion, PAGE_LINES};
 use crate::undo::Edit;
+use crate::language::LanguageId;
 use crate::encoding::{majority_newline, Encoding, NewlineStyle};
 
 #[derive(Clone, Debug)]
@@ -16,6 +17,10 @@ pub struct Document {
     preferred_column: Option<usize>,
     encoding: Encoding,
     newline_style: NewlineStyle,
+    id: u64,
+    path: Option<String>,
+    untitled_number: Option<u32>,
+    language: LanguageId,
 }
 
 impl Document {
@@ -35,6 +40,10 @@ impl Document {
             preferred_column: None,
             encoding: Encoding::Utf8,
             newline_style: majority_newline(&text),
+            id: 0,
+            path: None,
+            untitled_number: None,
+            language: LanguageId::PlainText,
         }
     }
 
@@ -255,6 +264,56 @@ impl Document {
 
     pub fn set_newline_style(&mut self, newline_style: NewlineStyle) {
         self.newline_style = newline_style;
+    }
+
+    pub fn id(&self) -> u64 {
+        self.id
+    }
+
+    pub fn set_id(&mut self, id: u64) {
+        self.id = id;
+    }
+
+    pub fn path(&self) -> Option<&str> {
+        self.path.as_deref()
+    }
+
+    pub fn set_path(&mut self, path: Option<String>) {
+        if let Some(ref p) = path {
+            self.language = crate::language::language_from_path(p);
+        }
+        self.path = path;
+    }
+
+    pub fn display_name(&self) -> String {
+        if let Some(path) = &self.path {
+            std::path::Path::new(path)
+                .file_name()
+                .and_then(|s| s.to_str())
+                .unwrap_or(path)
+                .to_string()
+        } else if let Some(n) = self.untitled_number {
+            format!("Untitled-{n}")
+        } else {
+            "Untitled".to_string()
+        }
+    }
+
+    pub fn untitled_number(&self) -> Option<u32> {
+        self.untitled_number
+    }
+
+    pub fn set_untitled_number(&mut self, number: u32) {
+        self.untitled_number = Some(number);
+        self.path = None;
+    }
+
+    pub fn language(&self) -> LanguageId {
+        self.language
+    }
+
+    pub fn set_language(&mut self, language: LanguageId) {
+        self.language = language;
     }
 
     pub fn move_caret(&mut self, motion: Motion, extend: bool) {
