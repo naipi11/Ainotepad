@@ -316,6 +316,18 @@ impl Document {
         self.language = language;
     }
 
+    pub(crate) fn rope_replace_all(&mut self, text: &str) {
+        self.rope = ropey::Rope::from_str(text);
+    }
+
+    pub(crate) fn push_public_edit(&mut self, edit: Edit) {
+        self.push_edit(edit);
+    }
+
+    pub(crate) fn mark_dirty(&mut self) {
+        self.dirty = true;
+    }
+
     pub fn move_caret(&mut self, motion: Motion, extend: bool) {
         let next = self.offset_after(motion);
         if extend {
@@ -344,6 +356,18 @@ impl Document {
 
     pub fn line_count(&self) -> usize {
         self.rope.len_lines()
+    }
+
+    pub(crate) fn line_of(&self, offset: Offset) -> usize {
+        if self.len_chars() == 0 {
+            return 0;
+        }
+        self.rope.char_to_line(offset.min(self.len_chars()))
+    }
+
+    pub(crate) fn start_of_line(&self, line: usize) -> Offset {
+        let line = line.min(self.rope.len_lines().saturating_sub(1));
+        self.rope.line_to_char(line)
     }
 
     fn clamp(&self, offset: Offset) -> Offset {
