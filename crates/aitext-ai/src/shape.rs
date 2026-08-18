@@ -16,6 +16,9 @@ pub fn shape_suggestion(raw: &str, prefix: &str) -> Option<String> {
     if !prefix.is_empty() && text.starts_with(prefix) {
         text = text[prefix.len()..].to_string();
     }
+    if looks_like_meta_completion(&text) {
+        return None;
+    }
     let mut lines = 0usize;
     let mut out = String::new();
     for ch in text.chars() {
@@ -36,6 +39,16 @@ pub fn shape_suggestion(raw: &str, prefix: &str) -> Option<String> {
     } else {
         Some(out)
     }
+}
+
+fn looks_like_meta_completion(text: &str) -> bool {
+    let lower = text.to_ascii_lowercase();
+    lower.contains("complete this")
+        || lower.contains("complete the text")
+        || lower.contains("we need to")
+        || lower.contains("the user says")
+        || lower.contains("file=untitled")
+        || lower.contains("lang=plain")
 }
 
 #[cfg(test)]
@@ -61,5 +74,11 @@ mod tests {
     fn keeps_continuation_when_model_repeats_line() {
         let shaped = shape_suggestion("1+2=3", "1+2").unwrap();
         assert_eq!(shaped, "=3");
+    }
+
+    #[test]
+    fn rejects_english_meta_reasoning() {
+        let raw = "We need to complete the text. The user says: Complete this.";
+        assert!(shape_suggestion(raw, "你好").is_none());
     }
 }

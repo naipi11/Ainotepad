@@ -84,14 +84,14 @@ pub fn request_body(snapshot: &CompletionSnapshot, model: &str) -> serde_json::V
         "messages": [
             {
                 "role": "system",
-                "content": "You complete code and text. Reply with only the next characters that should be inserted at the cursor. Never explain. Never use markdown fences."
+                "content": "Continue the user text in the same language. Output only the inserted continuation. No explanation."
 
             },
             {
                 "role": "user",
                 "content": format!(
-                    "Complete this. File={}. Lang={}. Before=[{}]. After=[{}]. Next:",
-                    snapshot.file_name, snapshot.language, snapshot.prefix, snapshot.suffix
+                    "TEXT_BEFORE<<<{}>>>TEXT_AFTER<<<{}>>>",
+                    snapshot.prefix, snapshot.suffix
                 )
             }
         ]
@@ -128,14 +128,6 @@ pub fn parse_completion_json(body: &str) -> Result<String, CompletionError> {
     }
     if let Some(content) = value
         .pointer("/choices/0/text")
-        .and_then(|v| v.as_str())
-    {
-        if !content.trim().is_empty() {
-            return Ok(content.to_string());
-        }
-    }
-    if let Some(content) = value
-        .pointer("/choices/0/message/reasoning_content")
         .and_then(|v| v.as_str())
     {
         if !content.trim().is_empty() {
