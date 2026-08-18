@@ -109,6 +109,11 @@ impl AitextApp {
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         let mut app = Self::new_for_test();
         app.config = load_config();
+        app.api_key = crate::secrets::load_api_key().ok().flatten();
+        app.refresh_completion_config();
+        if app.workspace.current_id().is_none() {
+            app.workspace.new_untitled();
+        }
         app
     }
 
@@ -302,6 +307,25 @@ mod tests {
             app.last_engine_event,
             Some(aitext_ai::EngineEvent::StartRequest { .. })
         ));
+    }
+
+    #[test]
+    fn queue_completion_uses_loaded_key() {
+        let mut app = AitextApp::new_for_test();
+        app.dispatch(Command::NewTab);
+        app.config.base_url = "https://api.deepseek.com/v1".into();
+        app.config.model = "deepseek-chat".into();
+        app.api_key = Some("sk-test".into());
+        app.handle_text_input("fn ");
+        app.poll_completion(10_000);
+        assert!(matches!(
+            app.last_engine_event,
+            Some(aitext_ai::EngineEvent::StartRequest { .. })
+        ));
+        assert_eq!(
+            app.completion.engine.state(),
+            aitext_ai::CompletionState::Requesting
+        );
     }
 
     #[test]

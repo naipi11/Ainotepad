@@ -63,7 +63,7 @@ fn handle_keys(ui: &Ui, app: &mut AitextApp) {
             if input.key_pressed(Key::H) { commands.push(Command::Replace); }
             if input.key_pressed(Key::A) { commands.push(Command::SelectAll); }
             if input.key_pressed(Key::Comma) { commands.push(Command::Settings); }
-        } else {
+        } else if !app.ime.composing {
             if input.key_pressed(Key::Escape) {
                 if app.find.visible {
                     // handled below
@@ -91,6 +91,9 @@ fn handle_keys(ui: &Ui, app: &mut AitextApp) {
     }
     if let Some(doc) = app.workspace.current_mut() {
         ui.input(|input| {
+            if app.ime.composing {
+                return;
+            }
             let extend = input.modifiers.shift;
             if input.key_pressed(Key::ArrowLeft) { doc.move_caret(Motion::Left, extend); }
             if input.key_pressed(Key::ArrowRight) { doc.move_caret(Motion::Right, extend); }
@@ -102,7 +105,16 @@ fn handle_keys(ui: &Ui, app: &mut AitextApp) {
             if input.key_pressed(Key::PageDown) { doc.move_caret(Motion::PageDown, extend); }
             if input.key_pressed(Key::Backspace) { doc.delete_backward(); }
             if input.key_pressed(Key::Delete) { doc.delete_forward(); }
-            if input.key_pressed(Key::Enter) { doc.insert("\n"); }
         });
+    }
+    let enter = ui.input(|input| {
+        input.key_pressed(Key::Enter) && !(input.modifiers.ctrl || input.modifiers.command)
+    });
+    if enter && !app.ime.composing {
+        let readonly = app.workspace.current().map(|d| d.is_readonly()).unwrap_or(true);
+        if !readonly {
+            app.handle_text_input("
+");
+        }
     }
 }

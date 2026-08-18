@@ -9,7 +9,9 @@ impl AitextApp {
         save_config(&self.config)?;
         if !self.pending_api_key.is_empty() {
             store_api_key(&self.pending_api_key).map_err(|e| ConfigError::Io(format!("{e:?}")))?;
+            self.api_key = Some(self.pending_api_key.clone());
         }
+        self.refresh_completion_config();
         Ok(())
     }
 }
@@ -50,7 +52,18 @@ pub fn draw_settings(ui: &mut Ui, app: &mut AitextApp) {
         if app.config.base_url.is_empty() || app.config.model.is_empty() || (app.pending_api_key.is_empty() && load_api_key().ok().flatten().is_none()) {
             app.status = "not configured".into();
         } else {
-            app.status = "ready to test".into();
+            let key = if !app.pending_api_key.is_empty() {
+                app.pending_api_key.clone()
+            } else {
+                load_api_key().ok().flatten().unwrap_or_default()
+            };
+            app.api_key = Some(key);
+            app.refresh_completion_config();
+            app.status = "testing connection".into();
+            if app.workspace.current().is_none() {
+                app.dispatch(crate::commands::Command::NewTab);
+            }
+            app.queue_completion();
         }
     }
     if ui.button("Save").clicked() {

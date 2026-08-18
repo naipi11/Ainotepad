@@ -19,7 +19,7 @@ impl ImeState {
         };
         match ime {
             ImeEvent::Enabled => {
-                self.composing = true;
+                // Enabled only means the IME is attached. Composition starts on Preedit.
                 ImeAction::None
             }
             ImeEvent::Preedit(text) => {

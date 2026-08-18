@@ -9,7 +9,24 @@ use crate::status_bar::draw_status_bar;
 
 impl eframe::App for AitextApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        install_fonts(ctx);
+        static FONTS_INSTALLED: std::sync::atomic::AtomicBool =
+            std::sync::atomic::AtomicBool::new(false);
+        if !FONTS_INSTALLED.swap(true, std::sync::atomic::Ordering::SeqCst) {
+            install_fonts(ctx);
+        }
+        let now_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis() as u64)
+            .unwrap_or(0);
+        self.poll_completion(now_ms);
+        if self.completion.inflight.is_some()
+            || matches!(
+                self.completion.engine.state(),
+                aitext_ai::CompletionState::Requesting
+            )
+        {
+            ctx.request_repaint_after(std::time::Duration::from_millis(50));
+        }
         egui::TopBottomPanel::top("menu").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {

@@ -124,7 +124,7 @@ pub fn paint_editor(ui: &mut Ui, doc: &mut Document, config: &AppConfig, ghost: 
             caret_pos,
             egui::Align2::LEFT_TOP,
             ghost,
-            font,
+            font.clone(),
             egui::Color32::from_rgba_unmultiplied(
                 config.ghost_color[0],
                 config.ghost_color[1],
@@ -133,6 +133,15 @@ pub fn paint_editor(ui: &mut Ui, doc: &mut Document, config: &AppConfig, ghost: 
             ),
         );
     }
+
+    let caret_rect = Rect::from_min_size(caret_pos, vec2(1.5, ch));
+    ui.ctx().output_mut(|o| {
+        o.ime = Some(egui::output::IMEOutput {
+            rect,
+            cursor_rect: caret_rect,
+        });
+        o.mutable_text_under_cursor = true;
+    });
 }
 
 fn line_of(doc: &Document, _offset: Offset) -> usize {
