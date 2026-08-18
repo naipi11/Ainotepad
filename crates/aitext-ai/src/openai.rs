@@ -84,14 +84,14 @@ pub fn request_body(snapshot: &CompletionSnapshot, model: &str) -> serde_json::V
         "messages": [
             {
                 "role": "system",
-                "content": "Continue the user text in the same language. Output only the inserted continuation. No explanation."
+                "content": "You are an inline autocomplete engine. Write only the next few characters to insert at the cursor. Match the language of the existing text. Do not explain. Do not repeat existing text. Do not mention prompts or labels."
 
             },
             {
                 "role": "user",
                 "content": format!(
-                    "TEXT_BEFORE<<<{}>>>TEXT_AFTER<<<{}>>>",
-                    snapshot.prefix, snapshot.suffix
+                    "{}",
+                    snapshot.prefix
                 )
             }
         ]

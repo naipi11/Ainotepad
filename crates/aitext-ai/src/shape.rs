@@ -16,6 +16,7 @@ pub fn shape_suggestion(raw: &str, prefix: &str) -> Option<String> {
     if !prefix.is_empty() && text.starts_with(prefix) {
         text = text[prefix.len()..].to_string();
     }
+    text = strip_prompt_artifacts(&text);
     if looks_like_meta_completion(&text) {
         return extract_from_meta(&text, prefix);
     }
@@ -52,6 +53,19 @@ fn looks_like_meta_completion(text: &str) -> bool {
         || lower.contains("the user says")
         || lower.contains("file=untitled")
         || lower.contains("lang=plain")
+        || lower.contains("text_before")
+        || lower.contains("text_after")
+}
+
+fn strip_prompt_artifacts(text: &str) -> String {
+    let mut out = text.replace("TEXT_BEFORE", "");
+    out = out.replace("TEXT_AFTER", "");
+    out = out.replace("<<<", "");
+    out = out.replace(">>>", "");
+    while out.contains("  ") {
+        out = out.replace("  ", " ");
+    }
+    out.trim().to_string()
 }
 
 fn is_mostly_english(text: &str) -> bool {
@@ -172,5 +186,13 @@ mod tests {
     fn extracts_cjk_from_reasoning() {
         let raw = "The user wrote 你好. A natural continuation is “世界”.";
         assert_eq!(shape_suggestion(raw, "你好").as_deref(), Some("世界"));
+    }
+
+    #[test]
+    fn strips_scaffold_labels() {
+        assert_eq!(
+            shape_suggestion("printf>>>TEXT_AFTER<<<", "printf").as_deref(),
+            None
+        );
     }
 }
