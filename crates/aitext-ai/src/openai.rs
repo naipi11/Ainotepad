@@ -134,6 +134,14 @@ pub fn parse_completion_json(body: &str) -> Result<String, CompletionError> {
             return Ok(content.to_string());
         }
     }
+    if let Some(content) = value
+        .pointer("/choices/0/message/reasoning_content")
+        .and_then(|v| v.as_str())
+    {
+        if !content.trim().is_empty() {
+            return Ok(content.to_string());
+        }
+    }
     Err(CompletionError::Empty)
 }
 
