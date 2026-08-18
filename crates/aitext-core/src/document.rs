@@ -3,6 +3,7 @@ use ropey::Rope;
 use crate::selection::{Offset, Selection};
 use crate::motion::{Motion, PAGE_LINES};
 use crate::undo::Edit;
+use crate::encoding::{majority_newline, Encoding, NewlineStyle};
 
 #[derive(Clone, Debug)]
 pub struct Document {
@@ -13,6 +14,8 @@ pub struct Document {
     undo_stack: Vec<Edit>,
     redo_stack: Vec<Edit>,
     preferred_column: Option<usize>,
+    encoding: Encoding,
+    newline_style: NewlineStyle,
 }
 
 impl Document {
@@ -30,6 +33,8 @@ impl Document {
             undo_stack: Vec::new(),
             redo_stack: Vec::new(),
             preferred_column: None,
+            encoding: Encoding::Utf8,
+            newline_style: majority_newline(&text),
         }
     }
 
@@ -234,6 +239,22 @@ impl Document {
 
     pub fn can_redo(&self) -> bool {
         !self.redo_stack.is_empty()
+    }
+
+    pub fn encoding(&self) -> Encoding {
+        self.encoding
+    }
+
+    pub fn set_encoding(&mut self, encoding: Encoding) {
+        self.encoding = encoding;
+    }
+
+    pub fn newline_style(&self) -> NewlineStyle {
+        self.newline_style
+    }
+
+    pub fn set_newline_style(&mut self, newline_style: NewlineStyle) {
+        self.newline_style = newline_style;
     }
 
     pub fn move_caret(&mut self, motion: Motion, extend: bool) {
