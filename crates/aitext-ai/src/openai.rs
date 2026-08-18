@@ -85,6 +85,7 @@ pub fn request_body(snapshot: &CompletionSnapshot, model: &str) -> serde_json::V
             {
                 "role": "system",
                 "content": "Continue the text at the cursor. Output only the continuation. Do not explain. Do not wrap in markdown fences. Do not repeat the existing prefix."
+
             },
             {
                 "role": "user",
@@ -104,13 +105,34 @@ pub fn parse_completion_json(body: &str) -> Result<String, CompletionError> {
         .pointer("/choices/0/message/content")
         .and_then(|v| v.as_str())
     {
-        return Ok(content.to_string());
+        if !content.trim().is_empty() {
+            return Ok(content.to_string());
+        }
+    }
+    if let Some(parts) = value.pointer("/choices/0/message/content").and_then(|v| v.as_array()) {
+        let joined = parts
+            .iter()
+            .filter_map(|part| part.get("text").and_then(|v| v.as_str()))
+            .collect::<String>();
+        if !joined.trim().is_empty() {
+            return Ok(joined);
+        }
     }
     if let Some(content) = value
         .pointer("/choices/0/delta/content")
         .and_then(|v| v.as_str())
     {
-        return Ok(content.to_string());
+        if !content.trim().is_empty() {
+            return Ok(content.to_string());
+        }
+    }
+    if let Some(content) = value
+        .pointer("/choices/0/text")
+        .and_then(|v| v.as_str())
+    {
+        if !content.trim().is_empty() {
+            return Ok(content.to_string());
+        }
     }
     Err(CompletionError::Empty)
 }

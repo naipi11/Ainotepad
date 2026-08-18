@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()

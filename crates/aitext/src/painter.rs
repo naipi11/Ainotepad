@@ -65,7 +65,7 @@ pub fn paint_editor(ui: &mut Ui, doc: &mut Document, config: &AppConfig, ghost: 
     painter.rect_filled(rect, 0.0, theme.background);
 
     let caret = doc.selection().caret;
-    let current_line = if doc.len_chars() == 0 { 0 } else { line_of(doc, caret) };
+    let current_line = offset_line_col(doc, caret).0;
     let origin = pos2(rect.left() + gutter_w + 8.0, rect.top() + 4.0);
 
     if response.clicked() || response.dragged() {
@@ -120,8 +120,9 @@ pub fn paint_editor(ui: &mut Ui, doc: &mut Document, config: &AppConfig, ghost: 
         }
     }
 
-    let (cl, _cc) = offset_line_col(doc, caret);
-    let caret_pos = pos2(origin.x + line_x_for_offset(ui, &font, doc, cl, caret), origin.y + cl as f32 * ch);
+    let (cl, _) = offset_line_col(doc, caret);
+    let caret_x = origin.x + line_x_for_offset(ui, &font, doc, cl, caret);
+    let caret_pos = pos2(caret_x, origin.y + cl as f32 * ch);
     painter.rect_filled(Rect::from_min_size(caret_pos, vec2(1.5, ch)), 0.0, theme.text);
 
     if let Some(ghost) = ghost {
@@ -133,10 +134,6 @@ pub fn paint_editor(ui: &mut Ui, doc: &mut Document, config: &AppConfig, ghost: 
         o.ime = Some(egui::output::IMEOutput { rect: caret_rect.expand2(vec2(12.0, 6.0)), cursor_rect: caret_rect });
         o.mutable_text_under_cursor = true;
     });
-}
-
-fn line_of(doc: &Document, _offset: Offset) -> usize {
-    if doc.len_chars() == 0 { 0 } else { doc.line_column().0.saturating_sub(1) }
 }
 
 fn line_start(doc: &Document, line: usize) -> Offset {

@@ -56,4 +56,10 @@ mod tests {
         let chars = "x".repeat(200);
         assert_eq!(shape_suggestion(&chars, "").unwrap().chars().count(), 120);
     }
+
+    #[test]
+    fn keeps_continuation_when_model_repeats_line() {
+        let shaped = shape_suggestion("1+2=3", "1+2").unwrap();
+        assert_eq!(shaped, "=3");
+    }
 }

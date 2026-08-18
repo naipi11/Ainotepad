@@ -27,6 +27,7 @@ pub struct CompletionEngine<T: Transport> {
     backoff_until: u64,
     inflight: Option<u64>,
     last_error: Option<String>,
+    inflight_prefix: String,
 }
 
 impl<T: Transport> CompletionEngine<T> {
@@ -44,6 +45,7 @@ impl<T: Transport> CompletionEngine<T> {
             backoff_until: 0,
             inflight: None,
             last_error: None,
+            inflight_prefix: String::new(),
         }
     }
 
@@ -143,6 +145,7 @@ impl<T: Transport> CompletionEngine<T> {
         }
         self.pending = None;
         self.inflight = Some(snapshot.generation);
+        self.inflight_prefix = snapshot.prefix.clone();
         self.state = CompletionState::Requesting;
         EngineEvent::StartRequest { snapshot }
     }
@@ -163,8 +166,16 @@ impl<T: Transport> CompletionEngine<T> {
         self.inflight = None;
         match result {
             Ok(raw) => {
-                let prefix = String::new();
-                if let Some(text) = shape_suggestion(&raw, &prefix) {
+                let prefix_tail: String = self
+                    .inflight_prefix
+                    .chars()
+                    .rev()
+                    .take(80)
+                    .collect::<String>()
+                    .chars()
+                    .rev()
+                    .collect();
+                if let Some(text) = shape_suggestion(&raw, &prefix_tail) {
                     self.suggestion = Some(GhostSuggestion { text, generation });
                     self.state = CompletionState::Suggested;
                     self.failures = 0;
@@ -173,13 +184,13 @@ impl<T: Transport> CompletionEngine<T> {
                 } else {
                     self.suggestion = None;
                     self.state = CompletionState::NoSuggestion;
-                    self.last_error = None;
+                    self.last_error = Some("empty completion".into());
                 }
             }
             Err(CompletionError::Cancelled) => {}
             Err(CompletionError::Empty) => {
                 self.state = CompletionState::NoSuggestion;
-                self.last_error = None;
+                self.last_error = Some("empty completion".into());
             }
             Err(CompletionError::NotConfigured) => {
                 self.state = CompletionState::NotConfigured;
