@@ -3,6 +3,8 @@ pub mod encoding;
 pub mod find;
 pub mod indent;
 pub mod language;
+pub mod highlight;
+pub mod lexers;
 pub mod motion;
 pub mod selection;
 pub mod undo;
@@ -14,6 +16,7 @@ pub use encoding::{
     NewlineStyle, OpenError, SizeClass, HARD_LIMIT_BYTES, SOFT_LIMIT_BYTES,
 };
 pub use find::{Direction, FindQuery, Match};
+pub use highlight::{highlight, Token, TokenKind};
 pub use indent::IndentSettings;
 pub use language::{language_from_path, LanguageId};
 pub use motion::{Motion, PAGE_LINES};
