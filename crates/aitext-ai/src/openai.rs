@@ -1,0 +1,164 @@
+use crate::snapshot::CompletionSnapshot;
+use crate::transport::{CancelFlag, CompletionError, Transport};
+
+#[derive(Clone, Debug)]
+pub struct OpenAiConfig {
+    pub base_url: String,
+    pub api_key: String,
+    pub model: String,
+    pub timeout_ms: u64,
+    pub allow_http: bool,
+}
+
+pub struct OpenAiTransport {
+    pub config: OpenAiConfig,
+}
+
+pub fn validate_base_url(base_url: &str, allow_http: bool) -> Result<(), CompletionError> {
+    if base_url.trim().is_empty() {
+        return Err(CompletionError::NotConfigured);
+    }
+    if base_url.starts_with("http://") {
+        if allow_http {
+            return Ok(());
+        }
+        return Err(CompletionError::RequestFailed("https required".into()));
+    }
+    if base_url.starts_with("https://") {
+        return Ok(());
+    }
+    Err(CompletionError::RequestFailed("unsupported scheme".into()))
+}
+
+pub fn endpoint_url(base_url: &str) -> String {
+    let trimmed = base_url.trim().trim_end_matches('/');
+    if trimmed.ends_with("/chat/completions") {
+        trimmed.to_string()
+    } else {
+        format!("{trimmed}/chat/completions")
+    }
+}
+
+pub fn request_body(snapshot: &CompletionSnapshot, model: &str) -> serde_json::Value {
+    serde_json::json!({
+        "model": model,
+        "temperature": 0.2,
+        "max_tokens": 80,
+        "stream": false,
+        "messages": [
+            {
+                "role": "system",
+                "content": "Continue the text at the cursor. Output only the continuation. Do not explain. Do not wrap in markdown fences. Do not repeat the existing prefix."
+            },
+            {
+                "role": "user",
+                "content": format!(
+                    "File: {}\nLanguage: {}\nPREFIX:\n{}\nSUFFIX:\n{}\nCONTINUATION:",
+                    snapshot.file_name, snapshot.language, snapshot.prefix, snapshot.suffix
+                )
+            }
+        ]
+    })
+}
+
+pub fn parse_completion_json(body: &str) -> Result<String, CompletionError> {
+    let value: serde_json::Value =
+        serde_json::from_str(body).map_err(|_| CompletionError::RequestFailed("bad json".into()))?;
+    if let Some(content) = value
+        .pointer("/choices/0/message/content")
+        .and_then(|v| v.as_str())
+    {
+        return Ok(content.to_string());
+    }
+    if let Some(content) = value
+        .pointer("/choices/0/delta/content")
+        .and_then(|v| v.as_str())
+    {
+        return Ok(content.to_string());
+    }
+    Err(CompletionError::Empty)
+}
+
+pub fn classify_status(status: u16) -> CompletionError {
+    match status {
+        401 | 403 => CompletionError::AuthFailed,
+        _ => CompletionError::RequestFailed(format!("http {status}")),
+    }
+}
+
+impl Transport for OpenAiTransport {
+    fn complete(
+        &self,
+        snapshot: CompletionSnapshot,
+        cancel: CancelFlag,
+    ) -> Result<String, CompletionError> {
+        if cancel.is_cancelled() {
+            return Err(CompletionError::Cancelled);
+        }
+        validate_base_url(&self.config.base_url, self.config.allow_http)?;
+        if self.config.api_key.is_empty() || self.config.model.is_empty() {
+            return Err(CompletionError::NotConfigured);
+        }
+        let client = reqwest::blocking::Client::builder()
+            .timeout(std::time::Duration::from_millis(self.config.timeout_ms.max(1000)))
+            .build()
+            .map_err(|e| CompletionError::RequestFailed(e.to_string()))?;
+        let url = endpoint_url(&self.config.base_url);
+        let response = client
+            .post(url)
+            .bearer_auth(&self.config.api_key)
+            .json(&request_body(&snapshot, &self.config.model))
+            .send()
+            .map_err(|e| {
+                if e.is_timeout() {
+                    CompletionError::Timeout
+                } else {
+                    CompletionError::RequestFailed(e.to_string())
+                }
+            })?;
+        let status = response.status().as_u16();
+        if !response.status().is_success() {
+            return Err(classify_status(status));
+        }
+        let body = response
+            .text()
+            .map_err(|e| CompletionError::RequestFailed(e.to_string()))?;
+        parse_completion_json(&body)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn endpoint_appends_chat_completions_once() {
+        assert_eq!(
+            endpoint_url("https://api.example.com/v1/"),
+            "https://api.example.com/v1/chat/completions"
+        );
+        assert_eq!(
+            endpoint_url("https://api.example.com/v1/chat/completions"),
+            "https://api.example.com/v1/chat/completions"
+        );
+    }
+
+    #[test]
+    fn http_rejected_unless_allowed() {
+        assert!(validate_base_url("http://127.0.0.1:8080/v1", false).is_err());
+        assert!(validate_base_url("http://127.0.0.1:8080/v1", true).is_ok());
+        assert!(validate_base_url("https://ok.example/v1", false).is_ok());
+    }
+
+    #[test]
+    fn parse_non_stream_message() {
+        let body = r#"{"choices":[{"message":{"content":" world"}}]}"#;
+        assert_eq!(parse_completion_json(body).unwrap(), " world");
+    }
+
+    #[test]
+    fn classify_auth_and_timeout_labels() {
+        assert!(matches!(classify_status(401), CompletionError::AuthFailed));
+        assert!(matches!(classify_status(500), CompletionError::RequestFailed(_)));
+    }
+}
