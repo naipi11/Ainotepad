@@ -1,13 +1,5 @@
-pub fn workspace_name() -> &'static str {
-    "aitext"
-}
+pub mod document;
+pub mod selection;
 
-#[cfg(test)]
-mod tests {
-    use super::workspace_name;
-
-    #[test]
-    fn workspace_name_is_aitext() {
-        assert_eq!(workspace_name(), "aitext");
-    }
-}
+pub use document::Document;
+pub use selection::{Offset, Selection};
