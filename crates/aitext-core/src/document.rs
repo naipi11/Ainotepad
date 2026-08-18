@@ -1,6 +1,7 @@
 use ropey::Rope;
 
 use crate::selection::{Offset, Selection};
+use crate::motion::{Motion, PAGE_LINES};
 use crate::undo::Edit;
 
 #[derive(Clone, Debug)]
@@ -11,6 +12,7 @@ pub struct Document {
     readonly: bool,
     undo_stack: Vec<Edit>,
     redo_stack: Vec<Edit>,
+    preferred_column: Option<usize>,
 }
 
 impl Document {
@@ -27,6 +29,7 @@ impl Document {
             readonly: false,
             undo_stack: Vec::new(),
             redo_stack: Vec::new(),
+            preferred_column: None,
         }
     }
 
@@ -52,6 +55,7 @@ impl Document {
             anchor: caret,
             caret,
         };
+        self.preferred_column = None;
     }
 
     pub fn set_selection(&mut self, selection: Selection) {
@@ -59,6 +63,7 @@ impl Document {
             anchor: self.clamp(selection.anchor),
             caret: self.clamp(selection.caret),
         };
+        self.preferred_column = None;
     }
 
     pub fn insert(&mut self, text: &str) {
@@ -231,8 +236,164 @@ impl Document {
         !self.redo_stack.is_empty()
     }
 
+    pub fn move_caret(&mut self, motion: Motion, extend: bool) {
+        let next = self.offset_after(motion);
+        if extend {
+            self.selection.caret = next;
+        } else {
+            self.selection = Selection {
+                anchor: next,
+                caret: next,
+            };
+        }
+        match motion {
+            Motion::Up | Motion::Down | Motion::PageUp | Motion::PageDown => {}
+            _ => self.preferred_column = None,
+        }
+    }
+
+    pub fn line_column(&self) -> (usize, usize) {
+        if self.len_chars() == 0 {
+            return (1, 1);
+        }
+        let caret = self.selection.caret.min(self.len_chars());
+        let line = self.rope.char_to_line(caret.min(self.rope.len_chars()));
+        let line_start = self.rope.line_to_char(line);
+        (line + 1, caret - line_start + 1)
+    }
+
+    pub fn line_count(&self) -> usize {
+        self.rope.len_lines()
+    }
+
     fn clamp(&self, offset: Offset) -> Offset {
         offset.min(self.len_chars())
+    }
+
+    fn offset_after(&mut self, motion: Motion) -> Offset {
+        let caret = self.selection.caret.min(self.len_chars());
+        match motion {
+            Motion::Left => caret.saturating_sub(1),
+            Motion::Right => (caret + 1).min(self.len_chars()),
+            Motion::Home => self.line_start(caret),
+            Motion::End => self.line_end(caret),
+            Motion::DocumentHome => 0,
+            Motion::DocumentEnd => self.len_chars(),
+            Motion::Up => self.vertical(caret, -1),
+            Motion::Down => self.vertical(caret, 1),
+            Motion::PageUp => self.vertical(caret, -(PAGE_LINES as isize)),
+            Motion::PageDown => self.vertical(caret, PAGE_LINES as isize),
+            Motion::WordLeft => self.word_left(caret),
+            Motion::WordRight => self.word_right(caret),
+        }
+    }
+
+    fn line_start(&self, offset: Offset) -> Offset {
+        if self.len_chars() == 0 {
+            return 0;
+        }
+        let line = self.rope.char_to_line(offset.min(self.len_chars()));
+        self.rope.line_to_char(line)
+    }
+
+    fn line_end(&self, offset: Offset) -> Offset {
+        if self.len_chars() == 0 {
+            return 0;
+        }
+        let line = self.rope.char_to_line(offset.min(self.len_chars()));
+        let start = self.rope.line_to_char(line);
+        let line_text = self.rope.line(line);
+        let mut end = start + line_text.len_chars();
+        if end > start {
+            let last = self.rope.char(end - 1);
+            if last == '\n' {
+                end -= 1;
+                if end > start && self.rope.char(end - 1) == '\r' {
+                    end -= 1;
+                }
+            } else if last == '\r' {
+                end -= 1;
+            }
+        }
+        end
+    }
+
+    fn vertical(&mut self, caret: Offset, delta: isize) -> Offset {
+        let line = if self.len_chars() == 0 {
+            0
+        } else {
+            self.rope.char_to_line(caret.min(self.len_chars()))
+        };
+        let column = self
+            .preferred_column
+            .unwrap_or_else(|| caret - self.line_start(caret));
+        self.preferred_column = Some(column);
+        let target = if delta < 0 {
+            line.saturating_sub((-delta) as usize)
+        } else {
+            (line + delta as usize).min(self.rope.len_lines().saturating_sub(1))
+        };
+        let start = self.rope.line_to_char(target);
+        let end = self.line_end(start);
+        (start + column).min(end)
+    }
+
+    fn is_word(ch: char) -> bool {
+        ch.is_ascii_alphanumeric() || ch == '_' || ch.is_alphabetic()
+    }
+
+    fn word_right(&self, caret: Offset) -> Offset {
+        let chars: Vec<char> = self.text().chars().collect();
+        let mut i = caret.min(chars.len());
+        if i >= chars.len() {
+            return chars.len();
+        }
+        if Self::is_word(chars[i]) {
+            while i < chars.len() && Self::is_word(chars[i]) {
+                i += 1;
+            }
+        } else if !chars[i].is_whitespace() {
+            while i < chars.len() && !Self::is_word(chars[i]) && !chars[i].is_whitespace() {
+                i += 1;
+            }
+        } else {
+            while i < chars.len() && chars[i].is_whitespace() {
+                i += 1;
+            }
+            while i < chars.len() && Self::is_word(chars[i]) {
+                i += 1;
+            }
+        }
+        i
+    }
+
+    fn word_left(&self, caret: Offset) -> Offset {
+        let chars: Vec<char> = self.text().chars().collect();
+        let mut i = caret.min(chars.len());
+        if i == 0 {
+            return 0;
+        }
+        i -= 1;
+        if Self::is_word(chars[i]) {
+            while i > 0 && Self::is_word(chars[i - 1]) {
+                i -= 1;
+            }
+        } else if chars[i].is_whitespace() {
+            while i > 0 && chars[i - 1].is_whitespace() {
+                i -= 1;
+            }
+            if i > 0 && Self::is_word(chars[i - 1]) {
+                i -= 1;
+                while i > 0 && Self::is_word(chars[i - 1]) {
+                    i -= 1;
+                }
+            }
+        } else {
+            while i > 0 && !Self::is_word(chars[i - 1]) && !chars[i - 1].is_whitespace() {
+                i -= 1;
+            }
+        }
+        i
     }
 
     fn delete_range(&mut self, start: Offset, end: Offset) {
@@ -410,5 +571,44 @@ mod tests {
         assert_eq!(doc.text(), "a");
         assert!(doc.undo());
         assert_eq!(doc.text(), "ab");
+    }
+
+    #[test]
+    fn arrows_and_home_end_move_caret() {
+        let mut doc = Document::from_text("ab\nc");
+        doc.set_caret(0);
+        doc.move_caret(crate::Motion::Right, false);
+        assert_eq!(doc.selection().caret, 1);
+        doc.move_caret(crate::Motion::End, false);
+        assert_eq!(doc.selection().caret, 2);
+        doc.move_caret(crate::Motion::Down, false);
+        assert_eq!(doc.selection().caret, 4);
+        doc.move_caret(crate::Motion::Home, false);
+        assert_eq!(doc.selection().caret, 3);
+        assert_eq!(doc.line_column(), (2, 1));
+    }
+
+    #[test]
+    fn shift_extends_selection() {
+        let mut doc = Document::from_text("abcd");
+        doc.set_caret(1);
+        doc.move_caret(crate::Motion::Right, true);
+        doc.move_caret(crate::Motion::Right, true);
+        assert_eq!(
+            doc.selection(),
+            Selection {
+                anchor: 1,
+                caret: 3
+            }
+        );
+        assert_eq!(doc.selected_text(), "bc");
+    }
+
+    #[test]
+    fn word_right_skips_a_word() {
+        let mut doc = Document::from_text("foo bar");
+        doc.set_caret(0);
+        doc.move_caret(crate::Motion::WordRight, false);
+        assert_eq!(doc.selection().caret, 3);
     }
 }
