@@ -1,6 +1,7 @@
 use ropey::Rope;
 
 use crate::selection::{Offset, Selection};
+use crate::undo::Edit;
 
 #[derive(Clone, Debug)]
 pub struct Document {
@@ -8,6 +9,8 @@ pub struct Document {
     selection: Selection,
     dirty: bool,
     readonly: bool,
+    undo_stack: Vec<Edit>,
+    redo_stack: Vec<Edit>,
 }
 
 impl Document {
@@ -22,6 +25,8 @@ impl Document {
             selection: Selection::default(),
             dirty: false,
             readonly: false,
+            undo_stack: Vec::new(),
+            redo_stack: Vec::new(),
         }
     }
 
@@ -60,6 +65,13 @@ impl Document {
         if self.readonly {
             return;
         }
+        let before = self.selection;
+        let deleted = if self.selection.is_empty() {
+            String::new()
+        } else {
+            self.selected_text()
+        };
+        let delete_start = self.selection.start();
         if !self.selection.is_empty() {
             self.delete_range(self.selection.start(), self.selection.end());
         }
@@ -70,6 +82,17 @@ impl Document {
             anchor: caret,
             caret,
         };
+        let coalesce_inserts = deleted.is_empty() && text.chars().count() == 1;
+        let edit = Edit {
+            delete_start,
+            deleted,
+            insert_start: at,
+            inserted: text.to_string(),
+            before,
+            after: self.selection,
+            coalesce_inserts,
+        };
+        self.push_edit(edit);
         self.dirty = true;
     }
 
@@ -77,8 +100,20 @@ impl Document {
         if self.readonly {
             return;
         }
+        let before = self.selection;
         if !self.selection.is_empty() {
+            let deleted = self.selected_text();
+            let start = self.selection.start();
             self.delete_range(self.selection.start(), self.selection.end());
+            self.push_edit(Edit {
+                delete_start: start,
+                deleted,
+                insert_start: start,
+                inserted: String::new(),
+                before,
+                after: self.selection,
+                coalesce_inserts: false,
+            });
             self.dirty = true;
             return;
         }
@@ -86,7 +121,17 @@ impl Document {
             return;
         }
         let end = self.selection.caret;
+        let deleted = self.rope.slice((end - 1)..end).to_string();
         self.delete_range(end - 1, end);
+        self.push_edit(Edit {
+            delete_start: end - 1,
+            deleted,
+            insert_start: end - 1,
+            inserted: String::new(),
+            before,
+            after: self.selection,
+            coalesce_inserts: false,
+        });
         self.dirty = true;
     }
 
@@ -94,8 +139,20 @@ impl Document {
         if self.readonly {
             return;
         }
+        let before = self.selection;
         if !self.selection.is_empty() {
+            let deleted = self.selected_text();
+            let start = self.selection.start();
             self.delete_range(self.selection.start(), self.selection.end());
+            self.push_edit(Edit {
+                delete_start: start,
+                deleted,
+                insert_start: start,
+                inserted: String::new(),
+                before,
+                after: self.selection,
+                coalesce_inserts: false,
+            });
             self.dirty = true;
             return;
         }
@@ -103,7 +160,17 @@ impl Document {
             return;
         }
         let start = self.selection.caret;
+        let deleted = self.rope.slice(start..(start + 1)).to_string();
         self.delete_range(start, start + 1);
+        self.push_edit(Edit {
+            delete_start: start,
+            deleted,
+            insert_start: start,
+            inserted: String::new(),
+            before,
+            after: self.selection,
+            coalesce_inserts: false,
+        });
         self.dirty = true;
     }
 
@@ -136,6 +203,34 @@ impl Document {
         self.readonly = readonly;
     }
 
+    pub fn undo(&mut self) -> bool {
+        let Some(edit) = self.undo_stack.pop() else {
+            return false;
+        };
+        self.apply_inverse(&edit);
+        self.redo_stack.push(edit);
+        self.dirty = true;
+        true
+    }
+
+    pub fn redo(&mut self) -> bool {
+        let Some(edit) = self.redo_stack.pop() else {
+            return false;
+        };
+        self.apply_forward(&edit);
+        self.undo_stack.push(edit);
+        self.dirty = true;
+        true
+    }
+
+    pub fn can_undo(&self) -> bool {
+        !self.undo_stack.is_empty()
+    }
+
+    pub fn can_redo(&self) -> bool {
+        !self.redo_stack.is_empty()
+    }
+
     fn clamp(&self, offset: Offset) -> Offset {
         offset.min(self.len_chars())
     }
@@ -149,6 +244,50 @@ impl Document {
             anchor: start,
             caret: start,
         };
+    }
+
+    fn push_edit(&mut self, edit: Edit) {
+        if edit.coalesce_inserts {
+            if let Some(last) = self.undo_stack.last_mut() {
+                if last.coalesce_inserts
+                    && last.inserted.chars().count() >= 1
+                    && last.after.caret == edit.insert_start
+                    && last.deleted.is_empty()
+                    && edit.deleted.is_empty()
+                {
+                    last.inserted.push_str(&edit.inserted);
+                    last.after = edit.after;
+                    self.redo_stack.clear();
+                    return;
+                }
+            }
+        }
+        self.undo_stack.push(edit);
+        self.redo_stack.clear();
+    }
+
+    fn apply_inverse(&mut self, edit: &Edit) {
+        if !edit.inserted.is_empty() {
+            let start = edit.insert_start;
+            let end = start + edit.inserted.chars().count();
+            self.rope.remove(start..end);
+        }
+        if !edit.deleted.is_empty() {
+            self.rope.insert(edit.delete_start, &edit.deleted);
+        }
+        self.selection = edit.before;
+    }
+
+    fn apply_forward(&mut self, edit: &Edit) {
+        if !edit.deleted.is_empty() {
+            let start = edit.delete_start;
+            let end = start + edit.deleted.chars().count();
+            self.rope.remove(start..end);
+        }
+        if !edit.inserted.is_empty() {
+            self.rope.insert(edit.insert_start, &edit.inserted);
+        }
+        self.selection = edit.after;
     }
 }
 
@@ -237,5 +376,39 @@ mod tests {
         doc.insert("啊");
         assert_eq!(doc.text(), "你啊好");
         assert_eq!(doc.len_chars(), 3);
+    }
+
+    #[test]
+    fn consecutive_single_char_inserts_undo_as_one_step() {
+        let mut doc = Document::new();
+        doc.insert("h");
+        doc.insert("i");
+        assert_eq!(doc.text(), "hi");
+        assert!(doc.undo());
+        assert_eq!(doc.text(), "");
+        assert!(!doc.undo());
+    }
+
+    #[test]
+    fn undo_then_new_edit_clears_redo() {
+        let mut doc = Document::from_text("a");
+        doc.set_caret(1);
+        doc.insert("b");
+        assert!(doc.undo());
+        doc.insert("c");
+        assert!(!doc.redo());
+        assert_eq!(doc.text(), "ac");
+    }
+
+    #[test]
+    fn delete_is_its_own_undo_step() {
+        let mut doc = Document::from_text("ab");
+        doc.set_caret(2);
+        doc.delete_backward();
+        doc.insert("c");
+        assert!(doc.undo());
+        assert_eq!(doc.text(), "a");
+        assert!(doc.undo());
+        assert_eq!(doc.text(), "ab");
     }
 }
