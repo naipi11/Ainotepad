@@ -12,7 +12,15 @@ fn char_advance(ui: &Ui, font: &FontId, ch: char) -> f32 {
     if ch == '\t' {
         return layout_char(ui, font, ' ', egui::Color32::WHITE).size().x * 4.0;
     }
-    layout_char(ui, font, ch, egui::Color32::WHITE).size().x.max(1.0)
+    let galley = layout_char(ui, font, ch, egui::Color32::WHITE);
+    let w = galley.size().x;
+    if w > 0.5 {
+        w
+    } else if (ch as u32) > 0x7F {
+        layout_char(ui, font, 'M', egui::Color32::WHITE).size().x * 2.0
+    } else {
+        layout_char(ui, font, 'M', egui::Color32::WHITE).size().x.max(1.0)
+    }
 }
 
 fn line_x_for_offset(ui: &Ui, font: &FontId, doc: &Document, line: usize, offset: Offset) -> f32 {
@@ -99,7 +107,7 @@ pub fn paint_editor(ui: &mut Ui, doc: &mut Document, config: &AppConfig, ghost: 
             if glyph != '\n' && glyph != '\r' {
                 let galley = layout_char(ui, &font, glyph, token_color(config.theme, kind));
                 painter.galley(pos2(x, y), galley.clone(), token_color(config.theme, kind));
-                x += galley.size().x.max(1.0);
+                x += char_advance(ui, &font, glyph);
             }
             i += 1;
         }

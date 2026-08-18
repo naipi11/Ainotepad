@@ -84,13 +84,13 @@ pub fn request_body(snapshot: &CompletionSnapshot, model: &str) -> serde_json::V
         "messages": [
             {
                 "role": "system",
-                "content": "Continue the text at the cursor. Output only the continuation. Do not explain. Do not wrap in markdown fences. Do not repeat the existing prefix."
+                "content": "You complete code and text. Reply with only the next characters that should be inserted at the cursor. Never explain. Never use markdown fences."
 
             },
             {
                 "role": "user",
                 "content": format!(
-                    "File: {}\nLanguage: {}\nPREFIX:\n{}\nSUFFIX:\n{}\nCONTINUATION:",
+                    "Complete this. File={}. Lang={}. Before=[{}]. After=[{}]. Next:",
                     snapshot.file_name, snapshot.language, snapshot.prefix, snapshot.suffix
                 )
             }

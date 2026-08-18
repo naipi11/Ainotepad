@@ -184,7 +184,12 @@ impl<T: Transport> CompletionEngine<T> {
                 } else {
                     self.suggestion = None;
                     self.state = CompletionState::NoSuggestion;
-                    self.last_error = Some("empty completion".into());
+                    let preview: String = raw.chars().take(80).collect();
+                    self.last_error = Some(if preview.trim().is_empty() {
+                        "empty completion".into()
+                    } else {
+                        format!("empty after trim: {preview}")
+                    });
                 }
             }
             Err(CompletionError::Cancelled) => {}
