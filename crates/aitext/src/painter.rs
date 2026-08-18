@@ -60,7 +60,13 @@ pub fn char_index_at(doc: &Document, font: &FontId, ui: &Ui, origin: Pos2, pos: 
     chosen.min(end)
 }
 
-pub fn paint_editor(ui: &mut Ui, doc: &mut Document, config: &AppConfig, ghost: Option<&str>) {
+pub fn paint_editor(
+    ui: &mut Ui,
+    doc: &mut Document,
+    config: &AppConfig,
+    ghost: Option<&str>,
+    preedit: Option<&str>,
+) {
     let theme = colors(config.theme);
     let font = FontId::monospace(config.font_size);
     let sample = layout_char(ui, &font, 'M', theme.text);
@@ -129,7 +135,17 @@ pub fn paint_editor(ui: &mut Ui, doc: &mut Document, config: &AppConfig, ghost: 
     }
 
     let (cl, _) = offset_line_col(doc, caret);
-    let caret_x = origin.x + line_x_for_offset(ui, &font, doc, cl, caret);
+    let mut caret_x = origin.x + line_x_for_offset(ui, &font, doc, cl, caret);
+    if let Some(preedit) = preedit {
+        for glyph in preedit.chars() {
+            if glyph == '\n' || glyph == '\r' {
+                continue;
+            }
+            let galley = layout_char(ui, &font, glyph, theme.text);
+            painter.galley(pos2(caret_x, origin.y + cl as f32 * ch), galley.clone(), theme.text);
+            caret_x += char_advance(ui, &font, glyph);
+        }
+    }
     let caret_pos = pos2(caret_x, origin.y + cl as f32 * ch);
     painter.rect_filled(Rect::from_min_size(caret_pos, vec2(1.5, ch)), 0.0, theme.text);
 

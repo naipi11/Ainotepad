@@ -79,7 +79,7 @@ pub fn request_body(snapshot: &CompletionSnapshot, model: &str) -> serde_json::V
     serde_json::json!({
         "model": model,
         "temperature": 0.2,
-        "max_tokens": 80,
+        "max_tokens": 256,
         "stream": false,
         "messages": [
             {
@@ -128,6 +128,14 @@ pub fn parse_completion_json(body: &str) -> Result<String, CompletionError> {
     }
     if let Some(content) = value
         .pointer("/choices/0/text")
+        .and_then(|v| v.as_str())
+    {
+        if !content.trim().is_empty() {
+            return Ok(content.to_string());
+        }
+    }
+    if let Some(content) = value
+        .pointer("/choices/0/message/reasoning_content")
         .and_then(|v| v.as_str())
     {
         if !content.trim().is_empty() {

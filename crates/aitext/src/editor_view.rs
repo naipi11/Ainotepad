@@ -14,7 +14,13 @@ pub fn draw_editor(ui: &mut Ui, app: &mut AitextApp) {
         None
     };
     if let Some(doc) = app.workspace.current_mut() {
-        paint_editor(ui, doc, &app.config, preedit.as_deref().or(ghost.as_deref()));
+        paint_editor(
+            ui,
+            doc,
+            &app.config,
+            ghost.as_deref(),
+            preedit.as_deref(),
+        );
     } else {
         ui.centered_and_justified(|ui| ui.label("No file open"));
     }
