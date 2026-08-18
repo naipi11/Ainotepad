@@ -26,6 +26,7 @@ pub struct CompletionEngine<T: Transport> {
     failures: u32,
     backoff_until: u64,
     inflight: Option<u64>,
+    last_error: Option<String>,
 }
 
 impl<T: Transport> CompletionEngine<T> {
@@ -42,6 +43,7 @@ impl<T: Transport> CompletionEngine<T> {
             failures: 0,
             backoff_until: 0,
             inflight: None,
+            last_error: None,
         }
     }
 
@@ -51,6 +53,10 @@ impl<T: Transport> CompletionEngine<T> {
 
     pub fn state(&self) -> CompletionState {
         self.state
+    }
+
+    pub fn last_error(&self) -> Option<&str> {
+        self.last_error.as_deref()
     }
 
     pub fn reject(&mut self) {
@@ -163,29 +169,36 @@ impl<T: Transport> CompletionEngine<T> {
                     self.state = CompletionState::Suggested;
                     self.failures = 0;
                     self.backoff_until = 0;
+                    self.last_error = None;
                 } else {
                     self.suggestion = None;
                     self.state = CompletionState::NoSuggestion;
+                    self.last_error = None;
                 }
             }
             Err(CompletionError::Cancelled) => {}
             Err(CompletionError::Empty) => {
                 self.state = CompletionState::NoSuggestion;
+                self.last_error = None;
             }
             Err(CompletionError::NotConfigured) => {
                 self.state = CompletionState::NotConfigured;
+                self.last_error = Some("missing url, model, or api key".into());
             }
             Err(CompletionError::Timeout) => {
                 self.note_failure(now_ms);
                 self.state = CompletionState::Timeout;
+                self.last_error = Some("timeout".into());
             }
             Err(CompletionError::AuthFailed) => {
                 self.note_failure(now_ms);
                 self.state = CompletionState::AuthFailed;
+                self.last_error = Some("auth failed".into());
             }
-            Err(CompletionError::RequestFailed(_)) => {
+            Err(CompletionError::RequestFailed(msg)) => {
                 self.note_failure(now_ms);
                 self.state = CompletionState::RequestFailed;
+                self.last_error = Some(msg);
             }
         }
         EngineEvent::StateChanged

@@ -34,9 +34,45 @@ pub fn endpoint_url(base_url: &str) -> String {
     let trimmed = base_url.trim().trim_end_matches('/');
     if trimmed.ends_with("/chat/completions") {
         trimmed.to_string()
+    } else if is_bare_openai_compatible_host(trimmed) {
+        format!("{trimmed}/v1/chat/completions")
     } else {
         format!("{trimmed}/chat/completions")
     }
+}
+
+fn is_bare_openai_compatible_host(base_url: &str) -> bool {
+    let Some((_, rest)) = base_url.split_once("://") else {
+        return false;
+    };
+    let host_and_path = rest.trim_start_matches('/');
+    let (host_port, path) = host_and_path
+        .split_once('/')
+        .unwrap_or((host_and_path, ""));
+    if !path.is_empty() {
+        return false;
+    }
+    let host = host_port
+        .split(':')
+        .next()
+        .unwrap_or(host_port)
+        .to_ascii_lowercase();
+    matches!(
+        host.as_str(),
+        "api.deepseek.com" | "api.openai.com" | "api.moonshot.cn"
+    )
+}
+
+pub fn error_message_from_body(body: &str) -> String {
+    if let Ok(value) = serde_json::from_str::<serde_json::Value>(body) {
+        if let Some(msg) = value.pointer("/error/message").and_then(|v| v.as_str()) {
+            return msg.to_string();
+        }
+        if let Some(msg) = value.pointer("/message").and_then(|v| v.as_str()) {
+            return msg.to_string();
+        }
+    }
+    body.split_whitespace().collect::<Vec<_>>().join(" ").chars().take(160).collect()
 }
 
 pub fn request_body(snapshot: &CompletionSnapshot, model: &str) -> serde_json::Value {
@@ -118,7 +154,15 @@ impl Transport for OpenAiTransport {
             })?;
         let status = response.status().as_u16();
         if !response.status().is_success() {
-            return Err(classify_status(status));
+            let body = response.text().unwrap_or_default();
+            let detail = error_message_from_body(&body);
+            return Err(match classify_status(status) {
+                CompletionError::AuthFailed => CompletionError::AuthFailed,
+                CompletionError::RequestFailed(_) if !detail.is_empty() => {
+                    CompletionError::RequestFailed(format!("http {status}: {detail}"))
+                }
+                other => other,
+            });
         }
         let body = response
             .text()
@@ -160,5 +204,19 @@ mod tests {
     fn classify_auth_and_timeout_labels() {
         assert!(matches!(classify_status(401), CompletionError::AuthFailed));
         assert!(matches!(classify_status(500), CompletionError::RequestFailed(_)));
+    }
+
+    #[test]
+    fn error_body_uses_openai_message() {
+        let body = r#"{"error":{"message":"Insufficient Balance"}}"#;
+        assert_eq!(error_message_from_body(body), "Insufficient Balance");
+    }
+
+    #[test]
+    fn deepseek_root_gets_v1_prefix() {
+        assert_eq!(
+            endpoint_url("https://api.deepseek.com"),
+            "https://api.deepseek.com/v1/chat/completions"
+        );
     }
 }

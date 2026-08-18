@@ -163,16 +163,19 @@ impl AitextApp {
 
 fn install_fonts(ctx: &egui::Context) {
     let mut fonts = egui::FontDefinitions::default();
-    for candidate in [
-        "C:\\Windows\\Fonts\\consola.ttf",
-        "C:\\Windows\\Fonts\\msyh.ttc",
-        "C:\\Windows\\Fonts\\simhei.ttf",
-    ] {
-        if let Ok(data) = std::fs::read(candidate) {
-            let name = candidate.to_string();
-            fonts.font_data.insert(name.clone(), egui::FontData::from_owned(data).into());
-            fonts.families.entry(egui::FontFamily::Monospace).or_default().insert(0, name);
+    let mut mono = Vec::new();
+    if let Ok(data) = std::fs::read("C:\\Windows\\Fonts\\consola.ttf") {
+        fonts.font_data.insert("consolas".into(), egui::FontData::from_owned(data).into());
+        mono.push("consolas".into());
+    }
+    for (name, path) in [("yahei", "C:\\Windows\\Fonts\\msyh.ttc"), ("simhei", "C:\\Windows\\Fonts\\simhei.ttf")] {
+        if let Ok(data) = std::fs::read(path) {
+            fonts.font_data.insert(name.to_string(), egui::FontData::from_owned(data).into());
+            mono.push(name.to_string());
         }
+    }
+    if !mono.is_empty() {
+        fonts.families.insert(egui::FontFamily::Monospace, mono);
     }
     ctx.set_fonts(fonts);
 }

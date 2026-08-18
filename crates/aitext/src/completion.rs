@@ -127,6 +127,16 @@ impl AitextApp {
                     self.last_engine_event =
                         Some(self.completion.engine.on_result_at(generation, result, now_ms));
                     self.completion.inflight = None;
+                    if let Some(detail) = self.completion.engine.last_error() {
+                        self.status = detail.to_string();
+                    } else if matches!(
+                        self.completion.engine.state(),
+                        CompletionState::Suggested | CompletionState::Empty | CompletionState::NoSuggestion
+                    ) {
+                        if self.status == "testing connection" || self.status.starts_with("http ") {
+                            self.status.clear();
+                        }
+                    }
                 }
                 Err(TryRecvError::Empty) => break,
                 Err(TryRecvError::Disconnected) => {
