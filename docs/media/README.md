@@ -1,11 +1,11 @@
 # Aitext showcase media
 
-The Paper Cut base scene was generated with the built-in image generation tool and refined from the approved `aitext-hero.png` reference. The prompt required a matte black/white paper split, a compact editor instrument, blue focus, green ghost text, a neutral gray divider, no orange line, no watermark, and no invented readable UI copy.
+The Paper Cut base scene was generated with the built-in image generation tool and refined from the approved `aitext-hero.png` reference. The prompt required a matte black/white paper split, a compact editor instrument, blue focus, green ghost text, a neutral gray divider, no orange line, and no watermark. The final editor text is intentionally explicit rather than abstract: each language variant shows a natural-language ghost continuation and a Python `print("Hello, World!")` completion.
 
 - `aitext-paper-cut-base.png`: generated base scene kept for provenance.
-- `hero-en.png`: exact English overlay composed with Segoe UI through ffmpeg.
-- `hero-zh-CN.png`: exact Simplified Chinese overlay composed with Microsoft YaHei through ffmpeg.
-- `demo-en.gif`: six-frame, 5 fps English ghost-text reveal, 1200×675.
-- `demo-zh-CN.gif`: six-frame, 5 fps Simplified Chinese ghost-text reveal, 1200×675.
+- `hero-en.png`: English Paper Cut hero with a readable sentence suggestion and `print("Hello, World!")` inside the editor.
+- `hero-zh-CN.png`: Simplified Chinese Paper Cut hero with `今天的天气` plus a green continuation and the same Python completion.
+- `demo-en.gif`: six-frame, 5 fps English editor showcase with the caret blinking beside the ghost suggestion, 1200×675.
+- `demo-zh-CN.gif`: six-frame, 5 fps Simplified Chinese editor showcase with the caret blinking beside the ghost suggestion, 1200×675.
 
-The animated frames are illustrative showcase material, not a live API capture. The green continuation communicates the product interaction while avoiding a claim about a specific model response.
+The animated frames are illustrative showcase material, not a live API capture. The green continuation communicates the product interaction while avoiding a claim about a specific model response. Bitmap backgrounds were generated with the built-in imagegen tool; exact language examples and the caret animation were assembled locally with ffmpeg so README text stays legible and deterministic.

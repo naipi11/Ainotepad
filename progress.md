@@ -64,6 +64,12 @@
 - Final release assets were downloaded and verified against `SHA256SUMS.txt`; ZIP contents were inspected; `Get-AuthenticodeSignature` reported `NotSigned`; the installer was not run.
 - Temporary RC branch `codex/aitext-v0.1.0-rc` was deleted after final Release verification. No desktop automation was used.
 
+## 2026-08-20 — README showcase readability revision
+
+- Replaced both Paper Cut hero images with readable editor examples: a natural-language ghost continuation plus a Python `print("Hello, World!")` completion.
+- Updated both English and Simplified Chinese GIFs to use the same visible examples with a blinking caret, rather than abstract placeholder bars.
+- Verified PNG dimensions (1672×941), GIF dimensions (1200×675), six GIF frames at 5 fps, and clean `git diff --check`. No application or desktop automation was used.
+
 ## 2026-08-20 — Aitext v0.1.0 formal release planning
 
 - User requested Windows installer, repository rename to Aitext, formal GitHub Release, bilingual Quick Start README, and English/Chinese showcase PNG/GIF assets.
