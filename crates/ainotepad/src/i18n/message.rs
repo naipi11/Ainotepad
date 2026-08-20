@@ -1,4 +1,4 @@
-use aitext_ai::CompletionError;
+use ainotepad_ai::CompletionError;
 
 use super::Locale;
 

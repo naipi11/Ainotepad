@@ -3,8 +3,8 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use aitext_ai::{AdapterKind, ProviderKind};
-use aitext_core::IndentSettings;
+use ainotepad_ai::{AdapterKind, ProviderKind};
+use ainotepad_core::IndentSettings;
 use serde::{Deserialize, Serialize};
 
 use crate::i18n::UiLanguage;
@@ -622,7 +622,7 @@ fn ensure_parent(path: &Path) -> Result<(), ConfigError> {
 mod tests {
     use super::*;
     use crate::i18n::UiLanguage;
-    use aitext_ai::{AdapterKind, ProviderKind};
+    use ainotepad_ai::{AdapterKind, ProviderKind};
     use std::fs;
 
     fn isolated() {

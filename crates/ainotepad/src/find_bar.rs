@@ -1,10 +1,10 @@
-use aitext_core::Direction;
+use ainotepad_core::Direction;
 use egui::Ui;
 
-use crate::commands::AitextApp;
+use crate::commands::AinotepadApp;
 use crate::i18n::{find_match_count, text, TextKey};
 
-pub fn draw_find_bar(ui: &mut Ui, app: &mut AitextApp) {
+pub fn draw_find_bar(ui: &mut Ui, app: &mut AinotepadApp) {
     if !app.find.visible {
         return;
     }

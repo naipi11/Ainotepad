@@ -1,12 +1,12 @@
-use aitext_core::{Encoding, LanguageId, NewlineStyle};
+use ainotepad_core::{Encoding, LanguageId, NewlineStyle};
 use egui::Ui;
 
-use crate::commands::AitextApp;
+use crate::commands::AinotepadApp;
 use crate::config::StatusItem;
 use crate::i18n::{text, Locale, TextKey};
 use crate::theme::shell_colors;
 
-pub fn draw_status_bar(ui: &mut Ui, app: &mut AitextApp) {
+pub fn draw_status_bar(ui: &mut Ui, app: &mut AinotepadApp) {
     let shell = shell_colors(app.config.theme);
     let items = app.config.status_items.clone();
     ui.horizontal(|ui| {
@@ -27,7 +27,7 @@ pub fn draw_status_bar(ui: &mut Ui, app: &mut AitextApp) {
                 let color = if item == StatusItem::Completion
                     && matches!(
                         app.completion.engine.state(),
-                        aitext_ai::CompletionState::Suggested
+                        ainotepad_ai::CompletionState::Suggested
                     ) {
                     shell.ghost
                 } else {
@@ -62,7 +62,7 @@ pub fn language_label(locale: Locale, language: LanguageId) -> &'static str {
     text(locale, key)
 }
 
-pub fn draw_language_selector(ui: &mut Ui, app: &mut AitextApp) {
+pub fn draw_language_selector(ui: &mut Ui, app: &mut AinotepadApp) {
     let Some(current) = app.workspace.current().map(|doc| doc.language()) else {
         ui.label(language_label(app.locale(), LanguageId::Markdown));
         return;
@@ -89,7 +89,7 @@ pub fn draw_language_selector(ui: &mut Ui, app: &mut AitextApp) {
     }
 }
 
-fn status_text(app: &AitextApp, item: StatusItem) -> Option<String> {
+fn status_text(app: &AinotepadApp, item: StatusItem) -> Option<String> {
     match item {
         StatusItem::Cursor => {
             if let Some(doc) = app.workspace.current() {
@@ -154,11 +154,11 @@ fn encoding_name(encoding: Encoding) -> String {
 #[cfg(test)]
 mod tests {
     use super::{language_label, status_text};
-    use crate::commands::AitextApp;
+    use crate::commands::AinotepadApp;
     use crate::config::{ApiProfile, StatusItem};
     use crate::i18n::{Locale, UiLanguage};
-    use aitext_ai::ProviderKind;
-    use aitext_core::LanguageId;
+    use ainotepad_ai::ProviderKind;
+    use ainotepad_core::LanguageId;
 
     #[test]
     fn language_labels_are_localized() {
@@ -172,7 +172,7 @@ mod tests {
 
     #[test]
     fn status_bar_identifies_active_profile_and_model() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         let mut profile = ApiProfile::new("Grok", ProviderKind::Xai);
         profile.remember_model("grok-test");
         app.config.add_profile(profile);
@@ -185,7 +185,7 @@ mod tests {
 
     #[test]
     fn status_bar_model_shows_safe_fallback_without_active_profile() {
-        let app = AitextApp::new_for_test();
+        let app = AinotepadApp::new_for_test();
 
         assert_eq!(
             status_text(&app, StatusItem::Model).as_deref(),
@@ -195,7 +195,7 @@ mod tests {
 
     #[test]
     fn status_bar_model_marks_profile_without_selected_model() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.config
             .add_profile(ApiProfile::new("Claude", ProviderKind::Anthropic));
 
@@ -207,7 +207,7 @@ mod tests {
 
     #[test]
     fn status_bar_model_fallback_follows_the_ui_language() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.set_ui_language(UiLanguage::ZhCn);
 
         assert_eq!(

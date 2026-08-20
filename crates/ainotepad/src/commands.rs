@@ -1,6 +1,6 @@
-use aitext_core::{Direction, FindQuery, LanguageId, Match, Workspace};
+use ainotepad_core::{Direction, FindQuery, LanguageId, Match, Workspace};
 
-use aitext_ai::{CancelFlag, EngineEvent};
+use ainotepad_ai::{CancelFlag, EngineEvent};
 
 use crate::completion::CompletionUiState;
 use crate::config::{load_config_with_legacy_import, AppConfig};
@@ -69,7 +69,7 @@ impl Default for FindBarState {
     }
 }
 
-pub struct AitextApp {
+pub struct AinotepadApp {
     pub workspace: Workspace,
     pub config: AppConfig,
     pub find: FindBarState,
@@ -95,7 +95,7 @@ pub struct AitextApp {
     pub(crate) system_locale: Locale,
 }
 
-impl AitextApp {
+impl AinotepadApp {
     pub fn new_for_test() -> Self {
         Self {
             workspace: Workspace::new(),
@@ -273,7 +273,7 @@ impl AitextApp {
             }
             Command::SelectAll => {
                 if let Some(doc) = self.workspace.current_mut() {
-                    doc.set_selection(aitext_core::Selection {
+                    doc.set_selection(ainotepad_core::Selection {
                         anchor: 0,
                         caret: doc.len_chars(),
                     });
@@ -378,7 +378,7 @@ impl AitextApp {
             self.find.matches.get(self.find.current).copied(),
             self.workspace.current_mut(),
         ) {
-            doc.set_selection(aitext_core::Selection {
+            doc.set_selection(ainotepad_core::Selection {
                 anchor: m.start,
                 caret: m.end,
             });
@@ -391,7 +391,7 @@ mod tests {
     use super::*;
     use crate::i18n::{Locale, TextKey, UiLanguage, UiMessage};
     use crate::secrets::{load_profile_api_key, store_api_key, store_profile_api_key};
-    use aitext_core::LanguageId;
+    use ainotepad_core::LanguageId;
 
     fn isolated_config_dir() -> std::path::PathBuf {
         std::env::temp_dir().join(format!(
@@ -405,7 +405,7 @@ mod tests {
 
     #[test]
     fn new_tab_then_insert_then_undo() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.dispatch(Command::NewTab);
         app.workspace.current_mut().unwrap().insert("x");
         assert_eq!(app.workspace.current().unwrap().text(), "x");
@@ -415,7 +415,7 @@ mod tests {
 
     #[test]
     fn close_last_clean_tab_leaves_empty_workspace() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.dispatch(Command::NewTab);
         let id = app.workspace.current_id().unwrap();
         app.dispatch(Command::CloseTab);
@@ -425,7 +425,7 @@ mod tests {
 
     #[test]
     fn tab_accepts_visible_ghost_as_one_insert() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.dispatch(Command::NewTab);
         app.workspace.current_mut().unwrap().insert("he");
         app.force_ghost("llo");
@@ -438,7 +438,7 @@ mod tests {
 
     #[test]
     fn typing_matching_prefix_trims_ghost() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.dispatch(Command::NewTab);
         app.force_ghost("hello");
         app.handle_text_input("he");
@@ -447,7 +447,7 @@ mod tests {
 
     #[test]
     fn esc_rejects_without_editing() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.dispatch(Command::NewTab);
         app.workspace.current_mut().unwrap().insert("ab");
         app.force_ghost("cd");
@@ -458,10 +458,10 @@ mod tests {
 
     #[test]
     fn composing_skips_requests() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.dispatch(Command::NewTab);
         let mut profile =
-            crate::config::ApiProfile::new("Test API", aitext_ai::ProviderKind::Custom);
+            crate::config::ApiProfile::new("Test API", ainotepad_ai::ProviderKind::Custom);
         profile.base_url = "https://example.com/v1".into();
         profile.remember_model("m");
         app.config.add_profile(profile);
@@ -471,16 +471,16 @@ mod tests {
         app.handle_text_input("你");
         assert!(!matches!(
             app.last_engine_event,
-            Some(aitext_ai::EngineEvent::StartRequest { .. })
+            Some(ainotepad_ai::EngineEvent::StartRequest { .. })
         ));
     }
 
     #[test]
     fn queue_completion_uses_loaded_key() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.dispatch(Command::NewTab);
         let mut profile =
-            crate::config::ApiProfile::new("DeepSeek", aitext_ai::ProviderKind::DeepSeek);
+            crate::config::ApiProfile::new("DeepSeek", ainotepad_ai::ProviderKind::DeepSeek);
         profile.base_url = "https://api.deepseek.com/v1".into();
         profile.remember_model("deepseek-v4-flash");
         app.config.add_profile(profile);
@@ -489,17 +489,17 @@ mod tests {
         app.poll_completion(10_000);
         assert!(matches!(
             app.last_engine_event,
-            Some(aitext_ai::EngineEvent::StartRequest { .. })
+            Some(ainotepad_ai::EngineEvent::StartRequest { .. })
         ));
         assert_eq!(
             app.completion.engine.state(),
-            aitext_ai::CompletionState::Requesting
+            ainotepad_ai::CompletionState::Requesting
         );
     }
 
     #[test]
     fn language_switch_is_immediate_and_does_not_touch_editor_or_ai_state() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.workspace.new_untitled();
         app.workspace.current_mut().unwrap().insert("你好");
         app.force_ghost("，世界");
@@ -518,7 +518,7 @@ mod tests {
 
     #[test]
     fn system_language_uses_captured_windows_locale() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.system_locale = Locale::ZhCn;
         app.set_ui_language(UiLanguage::System);
         assert_eq!(app.locale(), Locale::ZhCn);
@@ -526,7 +526,7 @@ mod tests {
 
     #[test]
     fn typed_status_rerenders_after_language_switch() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.status = Some(UiMessage::UnsavedChanges);
         app.set_ui_language(UiLanguage::En);
         assert_eq!(app.status_text().as_deref(), Some("Unsaved changes"));
@@ -541,11 +541,12 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         std::env::set_var("AITEXT_CONFIG_DIR", &dir);
 
-        let mut app = AitextApp::new_for_test();
-        let first = crate::config::ApiProfile::new("DeepSeek", aitext_ai::ProviderKind::DeepSeek);
+        let mut app = AinotepadApp::new_for_test();
+        let first =
+            crate::config::ApiProfile::new("DeepSeek", ainotepad_ai::ProviderKind::DeepSeek);
         let first_id = first.id.clone();
         app.config.add_profile(first);
-        let second = crate::config::ApiProfile::new("OpenAI", aitext_ai::ProviderKind::OpenAi);
+        let second = crate::config::ApiProfile::new("OpenAI", ainotepad_ai::ProviderKind::OpenAi);
         let second_id = second.id.clone();
         app.config.add_profile(second);
 
@@ -569,7 +570,8 @@ mod tests {
         std::env::set_var("AITEXT_CONFIG_DIR", &dir);
 
         let mut config = AppConfig::default();
-        let mut profile = crate::config::ApiProfile::new("OpenAI", aitext_ai::ProviderKind::OpenAi);
+        let mut profile =
+            crate::config::ApiProfile::new("OpenAI", ainotepad_ai::ProviderKind::OpenAi);
         profile.base_url = "https://api.openai.com/v1".into();
         profile.remember_model("gpt-test");
         let profile_id = profile.id.clone();
@@ -622,11 +624,12 @@ known_models = ["deepseek-v4-flash"]
         std::fs::create_dir_all(&dir).unwrap();
         std::env::set_var("AITEXT_CONFIG_DIR", &dir);
 
-        let mut app = AitextApp::new_for_test();
-        let first = crate::config::ApiProfile::new("DeepSeek", aitext_ai::ProviderKind::DeepSeek);
+        let mut app = AinotepadApp::new_for_test();
+        let first =
+            crate::config::ApiProfile::new("DeepSeek", ainotepad_ai::ProviderKind::DeepSeek);
         let first_id = first.id.clone();
         app.config.add_profile(first);
-        let second = crate::config::ApiProfile::new("OpenAI", aitext_ai::ProviderKind::OpenAi);
+        let second = crate::config::ApiProfile::new("OpenAI", ainotepad_ai::ProviderKind::OpenAi);
         let second_id = second.id.clone();
         app.config.add_profile(second);
 
@@ -649,11 +652,11 @@ known_models = ["deepseek-v4-flash"]
         std::fs::create_dir_all(&dir).unwrap();
         std::env::set_var("AITEXT_CONFIG_DIR", &dir);
 
-        let mut app = AitextApp::new_for_test();
-        let first = crate::config::ApiProfile::new("First", aitext_ai::ProviderKind::Custom);
+        let mut app = AinotepadApp::new_for_test();
+        let first = crate::config::ApiProfile::new("First", ainotepad_ai::ProviderKind::Custom);
         let first_id = first.id.clone();
         app.config.add_profile(first);
-        let second = crate::config::ApiProfile::new("Second", aitext_ai::ProviderKind::Custom);
+        let second = crate::config::ApiProfile::new("Second", ainotepad_ai::ProviderKind::Custom);
         let second_id = second.id.clone();
         app.config.add_profile(second);
 
@@ -680,7 +683,7 @@ known_models = ["deepseek-v4-flash"]
 
     #[test]
     fn preedit_does_not_touch_document() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.dispatch(Command::NewTab);
         app.apply_ime(egui::ImeEvent::Preedit("ni".into()));
         assert_eq!(app.workspace.current().unwrap().text(), "");
@@ -694,20 +697,20 @@ known_models = ["deepseek-v4-flash"]
 
     #[test]
     fn preedit_suppresses_completion_requests() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.dispatch(Command::NewTab);
         app.completion.engine.configured = true;
         app.apply_ime(egui::ImeEvent::Preedit("ni".into()));
         app.tick_completion(10_000);
         assert_eq!(
             app.completion.engine.state(),
-            aitext_ai::CompletionState::Empty
+            ainotepad_ai::CompletionState::Empty
         );
     }
 
     #[test]
     fn backspace_clears_stale_ghost() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.dispatch(Command::NewTab);
         app.workspace.current_mut().unwrap().insert("你们好");
         app.force_ghost("，欢迎来到我的个人网站！");
@@ -718,10 +721,10 @@ known_models = ["deepseek-v4-flash"]
 
     #[test]
     fn remember_model_from_settings_updates_list() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.config.add_profile(crate::config::ApiProfile::new(
             "Test API",
-            aitext_ai::ProviderKind::Custom,
+            ainotepad_ai::ProviderKind::Custom,
         ));
         let profile = app.config.active_profile_mut().unwrap();
         profile.remember_model("deepseek-v4-flash");
@@ -732,7 +735,7 @@ known_models = ["deepseek-v4-flash"]
 
     #[test]
     fn empty_prefix_does_not_keep_ghost() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.dispatch(Command::NewTab);
         app.force_ghost("，欢迎来到我的个人网站！");
         app.queue_completion();
@@ -741,7 +744,7 @@ known_models = ["deepseek-v4-flash"]
 
     #[test]
     fn setting_document_language_preserves_text_and_caret() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.workspace.new_untitled();
         let doc = app.workspace.current_mut().unwrap();
         doc.insert("# 标题");

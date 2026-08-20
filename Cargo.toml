@@ -1,13 +1,13 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/aitext-core",
-    "crates/aitext-ai",
-    "crates/aitext",
+    "crates/ainotepad-core",
+    "crates/ainotepad-ai",
+    "crates/ainotepad",
 ]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/naipi11/Aitext"
+repository = "https://github.com/naipi11/Ainotepad"

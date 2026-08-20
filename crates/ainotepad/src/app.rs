@@ -1,7 +1,7 @@
-use aitext_core::Document;
+use ainotepad_core::Document;
 use eframe::egui;
 
-use crate::commands::{AitextApp, Command};
+use crate::commands::{AinotepadApp, Command};
 use crate::config::{remember_recent, save_config};
 use crate::editor_view::draw_editor;
 use crate::find_bar::draw_find_bar;
@@ -69,7 +69,7 @@ fn active_tab_rule(rect: egui::Rect) -> egui::Rect {
     )
 }
 
-impl eframe::App for AitextApp {
+impl eframe::App for AinotepadApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let settings_was_open = self.settings_open;
         let locale = self.locale();
@@ -328,7 +328,7 @@ impl eframe::App for AitextApp {
                 .open(&mut self.about_open)
                 .show(ctx, |ui| {
                     ui.label(format!(
-                        "{}: Aitext 0.1.0",
+                        "{}: Ainotepad 0.1.0",
                         text(locale, TextKey::AboutVersion)
                     ));
                     ui.label(format!("{}: MIT", text(locale, TextKey::AboutLicense)));
@@ -347,7 +347,7 @@ impl eframe::App for AitextApp {
     }
 }
 
-impl AitextApp {
+impl AinotepadApp {
     pub(crate) fn poll_background_workers(&mut self, now_ms: u64) {
         self.poll_completion(now_ms);
         self.poll_profile_workers();
@@ -357,7 +357,7 @@ impl AitextApp {
         self.completion.inflight.is_some()
             || matches!(
                 self.completion.engine.state(),
-                aitext_ai::CompletionState::Requesting
+                ainotepad_ai::CompletionState::Requesting
             )
             || !self.profile_worker_inboxes.is_empty()
     }
@@ -473,7 +473,7 @@ mod tests {
     use super::*;
     use crate::config::ApiProfile;
     use crate::settings_page::{ProfileWorkerOperation, ProfileWorkerPayload, ProfileWorkerResult};
-    use aitext_ai::ProviderKind;
+    use ainotepad_ai::ProviderKind;
 
     #[test]
     fn active_tab_uses_a_two_pixel_bottom_rule() {
@@ -518,7 +518,7 @@ mod tests {
 
     #[test]
     fn polling_background_workers_applies_a_current_profile_model_result() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.config
             .add_profile(ApiProfile::new("Relay", ProviderKind::Custom));
         let profile_id = app.config.active_profile().unwrap().id.clone();
@@ -542,7 +542,7 @@ mod tests {
 
     #[test]
     fn background_work_needs_repaint_while_a_profile_worker_is_running() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         let (_sender, receiver) = std::sync::mpsc::channel::<ProfileWorkerResult>();
         app.profile_worker_inboxes.push(receiver);
 

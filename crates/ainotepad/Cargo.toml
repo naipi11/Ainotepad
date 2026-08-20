@@ -1,12 +1,12 @@
 [package]
-name = "aitext"
+name = "ainotepad"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-aitext-core = { path = "../aitext-core" }
-aitext-ai = { path = "../aitext-ai" }
+ainotepad-core = { path = "../ainotepad-core" }
+ainotepad-ai = { path = "../ainotepad-ai" }
 serde = { version = "1", features = ["derive"] }
 toml = "0.8"
 eframe = { version = "0.31", default-features = true }
@@ -18,9 +18,9 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 windows = { version = "0.58", features = ["Win32_Foundation", "Win32_Globalization", "Win32_Security_Cryptography"] }
 
 [package.metadata.winres]
-OriginalFilename = "aitext.exe"
-FileDescription = "Aitext"
-ProductName = "Aitext"
+OriginalFilename = "ainotepad.exe"
+FileDescription = "Ainotepad"
+ProductName = "Ainotepad"
 
 [build-dependencies]
 embed-resource = "2"

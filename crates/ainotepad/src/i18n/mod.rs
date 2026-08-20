@@ -56,23 +56,23 @@ pub fn windows_user_locale_tag() -> Option<String> {
     None
 }
 
-pub fn completion_state_key(state: aitext_ai::CompletionState) -> TextKey {
+pub fn completion_state_key(state: ainotepad_ai::CompletionState) -> TextKey {
     match state {
-        aitext_ai::CompletionState::Empty => TextKey::CompletionEmpty,
-        aitext_ai::CompletionState::Requesting => TextKey::CompletionRequesting,
-        aitext_ai::CompletionState::Suggested => TextKey::CompletionSuggested,
-        aitext_ai::CompletionState::NotConfigured => TextKey::CompletionNotConfigured,
-        aitext_ai::CompletionState::Timeout => TextKey::CompletionTimeout,
-        aitext_ai::CompletionState::AuthFailed => TextKey::CompletionAuthFailed,
-        aitext_ai::CompletionState::NoSuggestion => TextKey::CompletionNoSuggestion,
-        aitext_ai::CompletionState::RequestFailed => TextKey::CompletionRequestFailed,
+        ainotepad_ai::CompletionState::Empty => TextKey::CompletionEmpty,
+        ainotepad_ai::CompletionState::Requesting => TextKey::CompletionRequesting,
+        ainotepad_ai::CompletionState::Suggested => TextKey::CompletionSuggested,
+        ainotepad_ai::CompletionState::NotConfigured => TextKey::CompletionNotConfigured,
+        ainotepad_ai::CompletionState::Timeout => TextKey::CompletionTimeout,
+        ainotepad_ai::CompletionState::AuthFailed => TextKey::CompletionAuthFailed,
+        ainotepad_ai::CompletionState::NoSuggestion => TextKey::CompletionNoSuggestion,
+        ainotepad_ai::CompletionState::RequestFailed => TextKey::CompletionRequestFailed,
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use aitext_ai::CompletionState;
+    use ainotepad_ai::CompletionState;
 
     #[test]
     fn explicit_language_ignores_system_tag() {

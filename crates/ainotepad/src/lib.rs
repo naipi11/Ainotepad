@@ -16,4 +16,4 @@ pub mod settings_page;
 pub mod status_bar;
 pub mod theme;
 
-pub use commands::AitextApp;
+pub use commands::AinotepadApp;

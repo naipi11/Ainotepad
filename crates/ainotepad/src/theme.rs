@@ -1,5 +1,5 @@
 use crate::config::{CustomTheme, ThemeName};
-use aitext_core::TokenKind;
+use ainotepad_core::TokenKind;
 use egui::{Color32, Context, Stroke, Visuals};
 
 pub struct ThemeColors {

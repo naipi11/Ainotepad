@@ -1,12 +1,12 @@
 use crate::app::available_fonts;
-use crate::commands::AitextApp;
+use crate::commands::AinotepadApp;
 use crate::config::{save_config, ApiProfile, ConfigError, StatusItem, ThemeName};
 use crate::i18n::{
     known_models_count, text, FailureReason, Locale, TextKey, UiLanguage, UiMessage,
 };
 use crate::secrets::{remove_profile_api_key, store_profile_api_key};
 use crate::theme::ShellColors;
-use aitext_ai::{
+use ainotepad_ai::{
     fetch_models, test_connection, AdapterKind, CompletionError, ProfileRequestConfig, ProviderKind,
 };
 use egui::Ui;
@@ -132,12 +132,12 @@ fn adapter_route_hint(adapter: AdapterKind) -> &'static str {
 
 fn default_base_url(provider: ProviderKind) -> &'static str {
     match provider {
-        aitext_ai::ProviderKind::DeepSeek => "https://api.deepseek.com",
-        aitext_ai::ProviderKind::DeepSeekFim => "https://api.deepseek.com",
-        aitext_ai::ProviderKind::OpenAi => "https://api.openai.com/v1",
-        aitext_ai::ProviderKind::Xai => "https://api.x.ai/v1",
-        aitext_ai::ProviderKind::Anthropic => "https://api.anthropic.com",
-        aitext_ai::ProviderKind::Custom => "",
+        ainotepad_ai::ProviderKind::DeepSeek => "https://api.deepseek.com",
+        ainotepad_ai::ProviderKind::DeepSeekFim => "https://api.deepseek.com",
+        ainotepad_ai::ProviderKind::OpenAi => "https://api.openai.com/v1",
+        ainotepad_ai::ProviderKind::Xai => "https://api.x.ai/v1",
+        ainotepad_ai::ProviderKind::Anthropic => "https://api.anthropic.com",
+        ainotepad_ai::ProviderKind::Custom => "",
     }
 }
 
@@ -175,7 +175,7 @@ pub(crate) enum ProfileWorkerPayload {
     Connection(Result<(), CompletionError>),
 }
 
-impl AitextApp {
+impl AinotepadApp {
     fn active_profile_worker_request_config(
         &self,
         require_model: bool,
@@ -480,7 +480,7 @@ fn profile_rail_item(
     response
 }
 
-fn draw_profile_rail(ui: &mut Ui, app: &mut AitextApp, theme: &ShellColors) {
+fn draw_profile_rail(ui: &mut Ui, app: &mut AinotepadApp, theme: &ShellColors) {
     let locale = app.locale();
     section_heading(
         ui,
@@ -519,7 +519,7 @@ fn draw_profile_rail(ui: &mut Ui, app: &mut AitextApp, theme: &ShellColors) {
     }
 }
 
-fn draw_profile_detail(ui: &mut Ui, app: &mut AitextApp, theme: &ShellColors) {
+fn draw_profile_detail(ui: &mut Ui, app: &mut AinotepadApp, theme: &ShellColors) {
     let locale = app.locale();
     let Some(active) = app.config.active_profile() else {
         ui.heading(egui::RichText::new(text(locale, TextKey::ProfilesNoActive)).color(theme.text));
@@ -784,7 +784,7 @@ fn draw_profile_detail(ui: &mut Ui, app: &mut AitextApp, theme: &ShellColors) {
     apply_profile_detail_actions(app, profile_changed, fetch_models_clicked, test_clicked);
 }
 
-fn note_api_key_draft_changed(app: &mut AitextApp) {
+fn note_api_key_draft_changed(app: &mut AinotepadApp) {
     app.pending_api_key_clear = false;
     app.profile_edited();
     app.status = Some(UiMessage::DraftApiKeyChanged);
@@ -794,7 +794,7 @@ fn note_api_key_draft_changed(app: &mut AitextApp) {
 /// invalidates old workers and advances the revision before a new model fetch
 /// or connection check snapshots the active profile.
 fn apply_profile_detail_actions(
-    app: &mut AitextApp,
+    app: &mut AinotepadApp,
     profile_changed: bool,
     fetch_models_clicked: bool,
     test_connection_clicked: bool,
@@ -810,7 +810,7 @@ fn apply_profile_detail_actions(
     }
 }
 
-fn draw_appearance(ui: &mut Ui, app: &mut AitextApp, theme: &ShellColors) {
+fn draw_appearance(ui: &mut Ui, app: &mut AinotepadApp, theme: &ShellColors) {
     let locale = app.locale();
     section_heading(
         ui,
@@ -925,7 +925,7 @@ fn draw_appearance(ui: &mut Ui, app: &mut AitextApp, theme: &ShellColors) {
     });
 }
 
-fn draw_status_bar_settings(ui: &mut Ui, app: &mut AitextApp, theme: &ShellColors) {
+fn draw_status_bar_settings(ui: &mut Ui, app: &mut AinotepadApp, theme: &ShellColors) {
     let locale = app.locale();
     section_heading(
         ui,
@@ -965,7 +965,7 @@ fn draw_status_bar_settings(ui: &mut Ui, app: &mut AitextApp, theme: &ShellColor
     }
 }
 
-pub fn draw_settings(ui: &mut Ui, app: &mut AitextApp, close: &mut bool) {
+pub fn draw_settings(ui: &mut Ui, app: &mut AinotepadApp, close: &mut bool) {
     let theme = crate::theme::shell_colors(app.config.theme);
     let locale = app.locale();
     let content_height = settings_content_height(ui.available_height());
@@ -1087,13 +1087,13 @@ mod tests {
         provider_supports_adapter_choice, settings_content_height, ProfileWorkerOperation,
         ProfileWorkerPayload, ProfileWorkerResult, SettingsSection,
     };
-    use crate::commands::AitextApp;
+    use crate::commands::AinotepadApp;
     use crate::config::ApiProfile;
     use crate::i18n::{Locale, UiLanguage};
     use crate::secrets::{
         load_api_key, load_profile_api_key, store_api_key, store_profile_api_key,
     };
-    use aitext_ai::{AdapterKind, CompletionError, ProviderKind};
+    use ainotepad_ai::{AdapterKind, CompletionError, ProviderKind};
 
     #[test]
     fn settings_sections_are_localized() {
@@ -1130,13 +1130,13 @@ mod tests {
 
     #[test]
     fn new_app_starts_settings_on_profiles_section() {
-        let app = AitextApp::new_for_test();
+        let app = AinotepadApp::new_for_test();
         assert_eq!(app.settings_section, SettingsSection::Profiles);
     }
 
     #[test]
     fn language_change_preserves_unsaved_profile_and_secret_drafts() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.config
             .add_profile(ApiProfile::new("Relay", ProviderKind::Custom));
         app.pending_api_key = "draft-key".into();
@@ -1159,7 +1159,7 @@ mod tests {
 
     #[test]
     fn appearance_sliders_show_a_track_and_value_fill() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         let shell = crate::theme::shell_colors(crate::config::ThemeName::Dark);
         let context = egui::Context::default();
         let mut input = egui::RawInput::default();
@@ -1266,7 +1266,7 @@ mod tests {
 
     #[test]
     fn adapter_edit_invalidates_visible_ghost_and_old_workers() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.config
             .add_profile(ApiProfile::new("OpenAI", ProviderKind::OpenAi));
         app.force_ghost("stale ghost");
@@ -1323,7 +1323,7 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         std::env::set_var("AITEXT_CONFIG_DIR", &dir);
         store_api_key("").unwrap();
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         let mut profile = ApiProfile::new("Test API", ProviderKind::Custom);
         profile.remember_model("m1");
         app.config.add_profile(profile);
@@ -1363,7 +1363,7 @@ mod tests {
         std::env::set_var("AITEXT_CONFIG_DIR", &dir);
         store_api_key("").unwrap();
 
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.set_ui_language(UiLanguage::ZhCn);
         let mut profile = ApiProfile::new("Test API", ProviderKind::Custom);
         profile.remember_model("m1");
@@ -1385,7 +1385,7 @@ mod tests {
 
     #[test]
     fn stale_model_fetch_result_does_not_overwrite_changed_profile() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         let mut profile = ApiProfile::new("OpenAI", ProviderKind::OpenAi);
         profile.base_url = "https://old.example.test/v1".into();
         profile.remember_model("manual-old");
@@ -1415,7 +1415,7 @@ mod tests {
 
     #[test]
     fn connection_failure_status_is_profile_scoped_and_categorized() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.config
             .add_profile(ApiProfile::new("Claude", ProviderKind::Anthropic));
         let profile_id = app.config.active_profile().unwrap().id.clone();
@@ -1452,7 +1452,7 @@ mod tests {
 
     #[test]
     fn model_fetch_failure_names_the_profile_and_category() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.config
             .add_profile(ApiProfile::new("Relay", ProviderKind::Custom));
         let profile_id = app.config.active_profile().unwrap().id.clone();
@@ -1472,7 +1472,7 @@ mod tests {
 
     #[test]
     fn current_model_fetch_keeps_manual_selected_model() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         let mut profile = ApiProfile::new("Relay", ProviderKind::Custom);
         profile.remember_model("manual-model");
         app.config.add_profile(profile);
@@ -1502,7 +1502,7 @@ mod tests {
 
     #[test]
     fn poll_profile_workers_applies_current_model_fetch_result() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         let mut profile = ApiProfile::new("Relay", ProviderKind::Custom);
         profile.remember_model("manual-model");
         app.config.add_profile(profile);
@@ -1530,7 +1530,7 @@ mod tests {
 
     #[test]
     fn profile_edit_preserves_draft_key_and_invalidates_profile_workers() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         let mut profile = ApiProfile::new("Relay", ProviderKind::Custom);
         profile.remember_model("relay-model");
         app.config.add_profile(profile);
@@ -1549,7 +1549,7 @@ mod tests {
 
     #[test]
     fn api_key_draft_change_invalidates_old_profile_work_without_clearing_draft() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.config
             .add_profile(ApiProfile::new("Relay", ProviderKind::Custom));
         app.pending_api_key = "new-draft-key".into();
@@ -1572,7 +1572,7 @@ mod tests {
 
     #[test]
     fn fetch_models_requires_url_and_key_without_starting_a_worker() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.config
             .add_profile(ApiProfile::new("Relay", ProviderKind::Custom));
 
@@ -1587,7 +1587,7 @@ mod tests {
 
     #[test]
     fn connection_test_requires_url_model_and_key_without_starting_a_worker() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.config
             .add_profile(ApiProfile::new("Relay", ProviderKind::Custom));
 
@@ -1628,7 +1628,7 @@ mod tests {
             .unwrap();
         });
 
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.workspace.new_untitled();
         app.workspace
             .current_mut()
@@ -1698,7 +1698,7 @@ mod tests {
             .unwrap();
         });
 
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         let mut profile = ApiProfile::new("Relay", ProviderKind::Custom);
         profile.base_url = format!("http://{address}/v1");
         profile.allow_http = true;
@@ -1762,7 +1762,7 @@ mod tests {
             .unwrap();
         });
 
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         let mut profile = ApiProfile::new("Relay", ProviderKind::Custom);
         profile.base_url = format!("http://{address}/v1");
         profile.allow_http = true;
@@ -1809,7 +1809,7 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         std::env::set_var("AITEXT_CONFIG_DIR", &dir);
 
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.config
             .add_profile(ApiProfile::new("First", ProviderKind::OpenAi));
         app.config

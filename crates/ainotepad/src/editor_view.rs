@@ -1,11 +1,11 @@
-use aitext_core::Motion;
+use ainotepad_core::Motion;
 use egui::{Event, Key, Ui};
 
-use crate::commands::{AitextApp, Command};
+use crate::commands::{AinotepadApp, Command};
 use crate::i18n::TextKey;
 use crate::painter::paint_editor;
 
-pub fn draw_editor(ui: &mut Ui, app: &mut AitextApp) {
+pub fn draw_editor(ui: &mut Ui, app: &mut AinotepadApp) {
     if !app.settings_open && !app.find.visible {
         handle_keys(ui, app);
         handle_text(ui, app);
@@ -28,7 +28,7 @@ pub fn draw_editor(ui: &mut Ui, app: &mut AitextApp) {
     }
 }
 
-fn handle_text(ui: &Ui, app: &mut AitextApp) {
+fn handle_text(ui: &Ui, app: &mut AinotepadApp) {
     let events = ui.input(|i| i.events.clone());
     for event in events {
         if let Event::Ime(_) = &event {
@@ -56,7 +56,7 @@ fn handle_text(ui: &Ui, app: &mut AitextApp) {
     }
 }
 
-fn handle_keys(ui: &Ui, app: &mut AitextApp) {
+fn handle_keys(ui: &Ui, app: &mut AinotepadApp) {
     let mut commands = Vec::new();
     ui.input(|input| {
         if input.modifiers.ctrl || input.modifiers.command {
@@ -187,7 +187,7 @@ mod tests {
 
     #[test]
     fn settings_text_input_does_not_edit_the_document() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.workspace.new_untitled();
         app.settings_open = true;
         app.config.font_family = "__aitext_test_missing_font__".into();

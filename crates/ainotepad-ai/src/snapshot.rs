@@ -1,4 +1,4 @@
-use aitext_core::{Document, LanguageId};
+use ainotepad_core::{Document, LanguageId};
 
 pub const PREFIX_CONTEXT_CHARS: usize = 4000;
 pub const SUFFIX_CONTEXT_CHARS: usize = 500;

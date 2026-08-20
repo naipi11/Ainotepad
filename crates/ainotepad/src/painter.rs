@@ -1,4 +1,4 @@
-use aitext_core::{highlight, Document, Offset, Token};
+use ainotepad_core::{highlight, Document, Offset, Token};
 use egui::{pos2, vec2, Color32, FontId, Pos2, Rect, Sense, Ui};
 
 use crate::config::AppConfig;

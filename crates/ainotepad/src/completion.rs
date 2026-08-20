@@ -1,14 +1,14 @@
 use std::sync::mpsc::{self, Receiver, TryRecvError};
 use std::thread;
 
-use aitext_ai::{
+use ainotepad_ai::{
     take_snapshot, CancelFlag, CompletionEngine, CompletionError, CompletionState, EngineEvent,
     NullTransport, OpenAiTransport, ProfileRequestConfig, Transport,
 };
 
-use crate::commands::{AitextApp, Command};
+use crate::commands::{AinotepadApp, Command};
 use crate::i18n::{completion_state_key, text, UiMessage};
-use aitext_core::Motion;
+use ainotepad_core::Motion;
 
 pub(crate) type CompletionInbox = Receiver<CompletionWorkerResult>;
 
@@ -41,7 +41,7 @@ impl Default for CompletionUiState {
     }
 }
 
-impl AitextApp {
+impl AinotepadApp {
     pub fn delete_backward(&mut self) {
         if let Some(doc) = self.workspace.current_mut() {
             if !doc.is_readonly() {
@@ -239,7 +239,7 @@ impl AitextApp {
         }
     }
 
-    fn start_completion_request(&mut self, snapshot: aitext_ai::CompletionSnapshot) {
+    fn start_completion_request(&mut self, snapshot: ainotepad_ai::CompletionSnapshot) {
         let Some(profile_id) = self
             .config
             .active_profile()
@@ -283,7 +283,7 @@ impl AitextApp {
     }
 }
 
-impl AitextApp {
+impl AinotepadApp {
     pub fn ghost_text(&self) -> Option<&str> {
         self.completion.engine.suggestion().map(|s| s.text.as_str())
     }
@@ -296,7 +296,7 @@ impl AitextApp {
     }
 }
 
-pub fn apply_completion_command(app: &mut AitextApp, command: Command) {
+pub fn apply_completion_command(app: &mut AinotepadApp, command: Command) {
     match command {
         Command::AcceptGhost => app.accept_ghost(),
         Command::RejectGhost => app.reject_ghost(),
@@ -316,7 +316,7 @@ mod tests {
 
     #[test]
     fn completion_label_follows_the_ui_language() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         assert_eq!(app.completion_label_now(), "empty");
 
         app.set_ui_language(UiLanguage::ZhCn);
@@ -325,9 +325,10 @@ mod tests {
 
     #[test]
     fn stale_worker_result_cannot_apply_after_profile_revision_changes() {
-        let mut app = AitextApp::new_for_test();
+        let mut app = AinotepadApp::new_for_test();
         app.dispatch(Command::NewTab);
-        let mut profile = crate::config::ApiProfile::new("OpenAI", aitext_ai::ProviderKind::OpenAi);
+        let mut profile =
+            crate::config::ApiProfile::new("OpenAI", ainotepad_ai::ProviderKind::OpenAi);
         profile.base_url = "https://api.openai.com/v1".into();
         profile.remember_model("gpt-test");
         app.config.add_profile(profile);
