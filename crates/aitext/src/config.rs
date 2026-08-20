@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -506,17 +507,76 @@ pub enum ConfigError {
 }
 
 pub fn config_dir() -> PathBuf {
+    if let Ok(dir) = std::env::var("AINOTEPAD_CONFIG_DIR") {
+        return PathBuf::from(dir);
+    }
     if let Ok(dir) = std::env::var("AITEXT_CONFIG_DIR") {
         return PathBuf::from(dir);
     }
+    std::env::var_os("LOCALAPPDATA")
+        .or_else(|| std::env::var_os("APPDATA"))
+        .map(PathBuf::from)
+        .unwrap_or_else(std::env::temp_dir)
+        .join("Ainotepad")
+}
+
+pub fn legacy_config_dir() -> PathBuf {
     std::env::var_os("APPDATA")
         .map(PathBuf::from)
         .unwrap_or_else(std::env::temp_dir)
         .join("Aitext")
 }
 
+fn legacy_config_dirs() -> Vec<PathBuf> {
+    if std::env::var_os("AINOTEPAD_CONFIG_DIR").is_some()
+        || std::env::var_os("AITEXT_CONFIG_DIR").is_some()
+    {
+        return Vec::new();
+    }
+    let mut dirs = vec![legacy_config_dir()];
+    if let Some(local) = std::env::var_os("LOCALAPPDATA") {
+        let local = PathBuf::from(local).join("Aitext");
+        if !dirs.iter().any(|dir| dir == &local) {
+            dirs.push(local);
+        }
+    }
+    dirs
+}
+
+pub fn migrate_legacy_config(new_dir: &Path, legacy_dir: &Path) -> io::Result<bool> {
+    if new_dir.exists() || !legacy_dir.is_dir() {
+        return Ok(false);
+    }
+    copy_directory(legacy_dir, new_dir)?;
+    Ok(true)
+}
+
+fn copy_directory(source: &Path, destination: &Path) -> io::Result<()> {
+    std::fs::create_dir_all(destination)?;
+    for entry in std::fs::read_dir(source)? {
+        let entry = entry?;
+        let source_path = entry.path();
+        let destination_path = destination.join(entry.file_name());
+        if source_path.is_dir() {
+            copy_directory(&source_path, &destination_path)?;
+        } else {
+            std::fs::copy(source_path, destination_path)?;
+        }
+    }
+    Ok(())
+}
+
 pub(crate) fn load_config_with_legacy_import() -> (AppConfig, Option<String>) {
-    let path = config_dir().join("config.toml");
+    let current_dir = config_dir();
+    for legacy_dir in legacy_config_dirs() {
+        if current_dir != legacy_dir {
+            let _ = migrate_legacy_config(&current_dir, &legacy_dir);
+            if current_dir.exists() {
+                break;
+            }
+        }
+    }
+    let path = current_dir.join("config.toml");
     match std::fs::read_to_string(path) {
         Ok(raw) => {
             let parsed = toml::from_str::<AppConfig>(&raw).unwrap_or_default();
@@ -909,6 +969,49 @@ allow_http = false
         assert!(table.get("model").is_none());
         assert!(table.get("known_models").is_none());
         assert!(!raw.contains("test-secret-key"));
+    }
+
+    #[test]
+    fn legacy_config_is_copied_once_without_deleting_source() {
+        let root = std::env::temp_dir().join(format!(
+            "aitext-migration-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let legacy = root.join("Aitext");
+        let new = root.join("Ainotepad");
+        fs::create_dir_all(&legacy).unwrap();
+        fs::write(legacy.join("config.toml"), "theme = \"white\"\n").unwrap();
+
+        assert!(migrate_legacy_config(&new, &legacy).unwrap());
+        assert_eq!(
+            fs::read_to_string(new.join("config.toml")).unwrap(),
+            "theme = \"white\"\n"
+        );
+        assert!(legacy.join("config.toml").exists());
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn existing_ainotepad_config_wins_over_legacy_directory() {
+        let root = std::env::temp_dir().join(format!(
+            "aitext-migration-existing-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let legacy = root.join("Aitext");
+        let new = root.join("Ainotepad");
+        fs::create_dir_all(&legacy).unwrap();
+        fs::create_dir_all(&new).unwrap();
+        fs::write(legacy.join("config.toml"), "theme = \"dark\"\n").unwrap();
+
+        assert!(!migrate_legacy_config(&new, &legacy).unwrap());
+        assert!(!new.join("config.toml").exists());
+        let _ = fs::remove_dir_all(root);
     }
 }
 
