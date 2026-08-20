@@ -1,9 +1,9 @@
 pub mod document;
 pub mod encoding;
 pub mod find;
+pub mod highlight;
 pub mod indent;
 pub mod language;
-pub mod highlight;
 pub mod lexers;
 pub mod motion;
 pub mod selection;

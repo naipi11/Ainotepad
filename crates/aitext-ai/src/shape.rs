@@ -1,48 +1,79 @@
-pub const MAX_SUGGESTION_CHARS: usize = 120;
-pub const MAX_SUGGESTION_LINES: usize = 4;
+pub const MAX_PROSE_CHARS: usize = 16;
+pub const MAX_STATEMENT_CHARS: usize = 80;
+pub const MAX_BLOCK_CHARS: usize = 400;
+pub const MAX_BLOCK_LINES: usize = 8;
 
 pub fn shape_suggestion(raw: &str, prefix: &str) -> Option<String> {
-    let mut text = raw.trim().to_string();
-    if text.starts_with("```") {
-        text = text.trim_start_matches('`').to_string();
+    let mut text = strip_fences(raw);
+    text = strip_echoed_prefix(&text, prefix);
+    text = strip_overlap(&text, prefix);
+    text = strip_prompt_artifacts(&text);
+    if looks_like_meta_completion(&text) {
+        return None;
+    }
+    if prefix_is_cjk(prefix) && has_unexpected_latin(&text, prefix) {
+        text = take_before_latin(&text);
+    }
+    if looks_like_token_spam(&text) || looks_like_invented_identity(prefix, &text) {
+        return None;
+    }
+    text = clip_repeats(prefix, &text);
+    text = clip_to_mode(prefix, &text);
+    text = collapse_question_restatement(prefix, &text);
+    let text = text.trim_end().to_string();
+    if text.is_empty() || looks_like_meta_completion(&text) || looks_like_blog_opener(&text) {
+        None
+    } else {
+        Some(text)
+    }
+}
+
+fn strip_fences(raw: &str) -> String {
+    let mut text = raw.to_string();
+    let trimmed = text.trim_start();
+    if trimmed.starts_with("```") {
+        text = trimmed.trim_start_matches('`').to_string();
         if let Some(idx) = text.find('\n') {
             text = text[idx + 1..].to_string();
         }
         if let Some(idx) = text.rfind("```") {
             text = text[..idx].to_string();
         }
-        text = text.trim().to_string();
     }
+    text
+}
+
+fn strip_echoed_prefix(text: &str, prefix: &str) -> String {
     if !prefix.is_empty() && text.starts_with(prefix) {
-        text = text[prefix.len()..].to_string();
-    }
-    text = strip_prompt_artifacts(&text);
-    if looks_like_meta_completion(&text) {
-        return extract_from_meta(&text, prefix);
-    }
-    if prefix_is_cjk(prefix) && is_mostly_english(&text) {
-        return extract_from_meta(&text, prefix);
-    }
-    let mut lines = 0usize;
-    let mut out = String::new();
-    for ch in text.chars() {
-        if out.chars().count() >= MAX_SUGGESTION_CHARS {
-            break;
-        }
-        if ch == '\n' {
-            lines += 1;
-            if lines >= MAX_SUGGESTION_LINES {
-                break;
-            }
-        }
-        out.push(ch);
-    }
-    let out = out.trim_end().to_string();
-    if out.is_empty() {
-        None
+        text[prefix.len()..].to_string()
     } else {
-        Some(out)
+        text.to_string()
     }
+}
+
+fn strip_overlap(text: &str, prefix: &str) -> String {
+    let prefix_chars: Vec<char> = prefix.chars().collect();
+    let text_chars: Vec<char> = text.chars().collect();
+    if prefix_chars.len() < 2 {
+        return text.to_string();
+    }
+    let max = prefix_chars.len().min(text_chars.len());
+    if max < 2 {
+        return text.to_string();
+    }
+    for n in (2..=max).rev() {
+        if prefix_chars[prefix_chars.len() - n..] == text_chars[..n] {
+            return text_chars[n..].iter().collect();
+        }
+    }
+    text.to_string()
+}
+
+fn strip_prompt_artifacts(text: &str) -> String {
+    text.replace("TEXT_BEFORE", "")
+        .replace("TEXT_AFTER", "")
+        .replace("<<<", "")
+        .replace(">>>", "")
 }
 
 fn looks_like_meta_completion(text: &str) -> bool {
@@ -55,100 +86,199 @@ fn looks_like_meta_completion(text: &str) -> bool {
         || lower.contains("lang=plain")
         || lower.contains("text_before")
         || lower.contains("text_after")
+        || lower.contains("before=[")
+        || lower.contains("after=[")
 }
 
-fn strip_prompt_artifacts(text: &str) -> String {
-    let mut out = text.replace("TEXT_BEFORE", "");
-    out = out.replace("TEXT_AFTER", "");
-    out = out.replace("<<<", "");
-    out = out.replace(">>>", "");
-    while out.contains("  ") {
-        out = out.replace("  ", " ");
-    }
-    out.trim().to_string()
-}
-
-fn is_mostly_english(text: &str) -> bool {
-    let letters: Vec<char> = text.chars().filter(|c| c.is_alphabetic()).collect();
-    if letters.len() < 8 {
+fn looks_like_invented_identity(prefix: &str, text: &str) -> bool {
+    let lower = text.to_ascii_lowercase();
+    let prefix_l = prefix.to_ascii_lowercase();
+    if prefix_l.contains("alex") {
         return false;
     }
-    let ascii = letters.iter().filter(|c| c.is_ascii_alphabetic()).count();
-    ascii * 2 >= letters.len()
+    lower.contains("alex") || text.contains("我来自") || text.contains("我叫")
 }
 
-fn extract_from_meta(text: &str, prefix: &str) -> Option<String> {
-    if let Some(quoted) = last_quoted(text) {
-        if !looks_like_meta_completion(&quoted) {
-            if let Some(shaped) = shape_plain(&quoted, prefix) {
-                return Some(shaped);
-            }
-        }
-    }
-    if prefix_is_cjk(prefix) {
-        if let Some(run) = last_cjk_run(text) {
-            return shape_plain(&run, prefix);
-        }
-        return None;
-    }
-    None
+fn looks_like_blog_opener(text: &str) -> bool {
+    let trimmed = text.trim_start();
+    trimmed.starts_with("让我们")
+        || trimmed.starts_with("下面")
+        || trimmed.starts_with("首先")
+        || trimmed.starts_with("本文将")
+        || trimmed.starts_with("今天，")
+        || trimmed.contains("一起来了解")
+        || trimmed.to_ascii_lowercase().contains("in this article")
 }
 
-fn shape_plain(text: &str, prefix: &str) -> Option<String> {
-    let mut text = text.trim().to_string();
-    if !prefix.is_empty() && text.starts_with(prefix) {
-        text = text[prefix.len()..].to_string();
+fn looks_like_token_spam(text: &str) -> bool {
+    let mut prev_cjk = false;
+    let mut spaced = 0usize;
+    let chars: Vec<char> = text.chars().collect();
+    for i in 0..chars.len() {
+        let ch = chars[i];
+        if ch == ' ' && prev_cjk && chars.get(i + 1).copied().map(is_cjk).unwrap_or(false) {
+            spaced += 1;
+        }
+        prev_cjk = is_cjk(ch);
     }
-    let text = text.trim().to_string();
-    if text.is_empty() || looks_like_meta_completion(&text) {
-        None
-    } else {
-        Some(text.chars().take(MAX_SUGGESTION_CHARS).collect())
+    spaced >= 2
+}
+
+fn has_unexpected_latin(text: &str, prefix: &str) -> bool {
+    if prefix.chars().any(|ch| ch.is_ascii_alphabetic()) || looks_like_code(prefix) {
+        return false;
     }
+    text.chars().any(|ch| ch.is_ascii_alphabetic())
+}
+
+fn take_before_latin(text: &str) -> String {
+    text.chars()
+        .take_while(|ch| !ch.is_ascii_alphabetic())
+        .collect()
+}
+
+fn looks_like_code(prefix: &str) -> bool {
+    let last = prefix.lines().last().unwrap_or(prefix);
+    last.contains('{')
+        || last.contains('}')
+        || last.contains(';')
+        || last.contains('(')
+        || last.contains("def ")
+        || last.contains("fn ")
+        || last.contains("class ")
+        || last.contains("printf")
+        || prefix.contains("fn ")
+        || prefix.contains("def ")
 }
 
 fn prefix_is_cjk(prefix: &str) -> bool {
-    prefix.chars().any(|ch| ('一'..='鿿').contains(&ch))
+    let last = prefix.lines().last().unwrap_or(prefix);
+    last.chars().any(is_cjk)
 }
 
-fn last_cjk_run(text: &str) -> Option<String> {
-    let mut current = String::new();
-    let mut last = None;
-    for ch in text.chars() {
-        if ('一'..='鿿').contains(&ch) {
-            current.push(ch);
-        } else if !current.is_empty() {
-            last = Some(current.clone());
-            current.clear();
-        }
-    }
-    if !current.is_empty() {
-        last = Some(current);
-    }
-    last.filter(|s| s.chars().count() >= 1)
+fn is_cjk(ch: char) -> bool {
+    ('\u{4e00}'..='\u{9fff}').contains(&ch)
 }
 
-fn last_quoted(text: &str) -> Option<String> {
-    let mut last = None;
-    let mut current = String::new();
-    let mut in_quote = false;
-    for ch in text.chars() {
-        if ch == '"' || ch == '“' || ch == '”' || ch == '「' || ch == '」' {
-            if in_quote {
-                if !current.trim().is_empty() {
-                    last = Some(current.trim().to_string());
-                }
-                current.clear();
-                in_quote = false;
-            } else {
-                in_quote = true;
-                current.clear();
+fn clip_repeats(prefix: &str, text: &str) -> String {
+    let last_line = prefix.lines().last().unwrap_or("");
+    let lines: Vec<&str> = text.split('\n').collect();
+    if lines.is_empty() {
+        return String::new();
+    }
+    let mut out: Vec<String> = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    let completed_first = format!("{last_line}{}", lines[0]);
+    for (i, line) in lines.iter().enumerate() {
+        let stripped = line.trim();
+        if i > 0 {
+            if !last_line.trim().is_empty()
+                && !completed_first.trim().is_empty()
+                && (*line == completed_first || stripped == completed_first.trim())
+            {
+                break;
             }
-        } else if in_quote {
-            current.push(ch);
+            if !stripped.is_empty() && stripped.chars().count() >= 8 && seen.contains(stripped) {
+                break;
+            }
+        }
+        if !stripped.is_empty() {
+            seen.insert(stripped.to_string());
+        }
+        out.push((*line).to_string());
+    }
+    out.join("\n")
+}
+
+fn clip_to_mode(prefix: &str, text: &str) -> String {
+    if looks_like_code(prefix) {
+        let last = prefix.lines().last().unwrap_or("");
+        let multiline = last.trim().is_empty()
+            || last.trim_end().ends_with(':')
+            || last.trim_end().ends_with('{')
+            || last.trim_end().ends_with(',');
+        if multiline {
+            return cap_chars_and_lines(text, MAX_BLOCK_CHARS, MAX_BLOCK_LINES);
+        }
+        return cap_chars_and_lines(text, MAX_STATEMENT_CHARS, 2);
+    }
+    let first = text.lines().next().unwrap_or(text);
+    let first = clip_at_sentence(first);
+    cap_chars_and_lines(&first, MAX_PROSE_CHARS, 1)
+}
+
+fn clip_at_sentence(text: &str) -> String {
+    let mut out = String::new();
+    for ch in text.chars() {
+        out.push(ch);
+        if matches!(ch, '。' | '！' | '？' | '.' | '!' | '?') && out.chars().count() >= 1 {
+            break;
         }
     }
-    last
+    out
+}
+
+fn collapse_question_restatement(prefix: &str, text: &str) -> String {
+    if !is_question_like(prefix) {
+        return text.to_string();
+    }
+    let first = text.lines().next().unwrap_or(text);
+    if !is_question_like(first) {
+        return text.to_string();
+    }
+    let prefix_words = content_chars(prefix);
+    let text_words = content_chars(first);
+    if prefix_words.is_empty() || text_words.is_empty() {
+        return text.to_string();
+    }
+    let overlap = prefix_words
+        .iter()
+        .filter(|ch| text_words.contains(ch))
+        .count();
+    if overlap * 2 >= prefix_words.len() {
+        if !prefix.ends_with('？') && !prefix.ends_with('?') {
+            return "？".to_string();
+        }
+        return String::new();
+    }
+    text.to_string()
+}
+
+fn is_question_like(text: &str) -> bool {
+    let t = text.trim();
+    t.ends_with('？')
+        || t.ends_with('?')
+        || t.contains("怎么")
+        || t.contains("怎样")
+        || t.contains("什么")
+        || t.contains("吗")
+        || t.contains("呢")
+        || t.contains("如何")
+}
+
+fn content_chars(text: &str) -> Vec<char> {
+    text.chars()
+        .filter(|ch| is_cjk(*ch) || ch.is_ascii_alphanumeric())
+        .filter(|ch| !matches!(*ch, '的' | '了' | '吗' | '呢' | '啊' | '呀'))
+        .collect()
+}
+
+fn cap_chars_and_lines(text: &str, max_chars: usize, max_lines: usize) -> String {
+    let mut lines = 0usize;
+    let mut out = String::new();
+    for ch in text.chars() {
+        if out.chars().count() >= max_chars {
+            break;
+        }
+        if ch == '\n' {
+            lines += 1;
+            if lines >= max_lines {
+                break;
+            }
+        }
+        out.push(ch);
+    }
+    out.trim_end().to_string()
 }
 
 #[cfg(test)]
@@ -162,12 +292,11 @@ mod tests {
     }
 
     #[test]
-    fn caps_lines_and_chars() {
-        let long = "a\n".repeat(10);
-        let shaped = shape_suggestion(&long, "").unwrap();
-        assert_eq!(shaped.lines().count(), 4);
-        let chars = "x".repeat(200);
-        assert_eq!(shape_suggestion(&chars, "").unwrap().chars().count(), 120);
+    fn prose_stays_on_one_short_line() {
+        let long = "line\n".repeat(8);
+        let shaped = shape_suggestion(&long, "hello").unwrap();
+        assert_eq!(shaped.lines().count(), 1);
+        assert!(shaped.chars().count() <= MAX_PROSE_CHARS);
     }
 
     #[test]
@@ -177,15 +306,33 @@ mod tests {
     }
 
     #[test]
-    fn rejects_english_meta_reasoning() {
-        let raw = "We need to complete the text. The user says: Complete this.";
-        assert!(shape_suggestion(raw, "你好").is_none());
+    fn keeps_leading_space() {
+        let shaped = shape_suggestion(" world\");", "printf(\"hello").unwrap();
+        assert_eq!(shaped, " world\");");
     }
 
     #[test]
-    fn extracts_cjk_from_reasoning() {
-        let raw = "The user wrote 你好. A natural continuation is “世界”.";
-        assert_eq!(shape_suggestion(raw, "你好").as_deref(), Some("世界"));
+    fn rejects_english_meta_reasoning() {
+        let raw = "We need to complete the text. The user says: Complete this.";
+        assert!(shape_suggestion(raw, "\u{4f60}\u{597d}").is_none());
+    }
+
+    #[test]
+    fn clips_weather_essay_to_question_mark() {
+        let raw = "\u{4eca}\u{5929}\u{7684}\u{5929}\u{6c14}\u{5982}\u{4f55}\u{ff1f}\u{8ba9}\u{6211}\u{4eec}\u{4e00}\u{8d77}\u{6765}\u{4e86}\u{89e3}\u{4e00}\u{4e0b}\u{ff01}\n\nxx";
+        let shaped = shape_suggestion(
+            raw,
+            "\u{4eca}\u{5929}\u{5929}\u{6c14}\u{600e}\u{4e48}\u{6837}",
+        )
+        .unwrap();
+        assert_eq!(shaped, "\u{ff1f}");
+    }
+
+    #[test]
+    fn rejects_spaced_cjk_spam_and_latin_identity() {
+        let raw = "ex \u{6211}\u{6765}\u{81ea} alex";
+        let shaped = shape_suggestion(raw, "\u{4f60}\u{4eec}\u{597d}");
+        assert!(shaped.is_none() || !shaped.unwrap().to_ascii_lowercase().contains("alex"));
     }
 
     #[test]
@@ -194,5 +341,19 @@ mod tests {
             shape_suggestion("printf>>>TEXT_AFTER<<<", "printf").as_deref(),
             None
         );
+    }
+
+    #[test]
+    fn clips_repeated_printf_block() {
+        let raw = " world\")\nprintf(\"hello world\")\nprintf(\"hello world\")";
+        let shaped = shape_suggestion(raw, "printf(\"hello").unwrap();
+        assert_eq!(shaped, " world\")");
+    }
+
+    #[test]
+    fn strips_overlapping_hello() {
+        let shaped = shape_suggestion("hello a", "printf(\"hello").unwrap();
+        assert_ne!(shaped, "hello a");
+        assert!(!shaped.starts_with("hello"));
     }
 }

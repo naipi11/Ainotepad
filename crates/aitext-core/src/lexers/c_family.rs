@@ -1,11 +1,20 @@
 use crate::highlight::{Token, TokenKind};
 use crate::lexers::{
-    is_ident_start, push, scan_block_comment, scan_ident_or_keyword, scan_line_comment, scan_number,
-    scan_string,
+    is_ident_start, push, scan_block_comment, scan_ident_or_keyword, scan_line_comment,
+    scan_number, scan_string,
 };
 
 const KEYWORDS: &[&str] = &[
-    "int", "void", "return", "if", "else", "for", "while", "struct", "class", "namespace",
+    "int",
+    "void",
+    "return",
+    "if",
+    "else",
+    "for",
+    "while",
+    "struct",
+    "class",
+    "namespace",
     "template",
 ];
 

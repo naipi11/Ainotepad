@@ -1,13 +1,19 @@
 use crate::highlight::Token;
-use crate::lexers::{
-    is_ident_start, push, scan_block_comment, scan_ident_or_keyword, scan_line_comment,
-    scan_number, scan_string,
-};
 use crate::highlight::TokenKind;
+use crate::lexers::{
+    is_ident_start, push, scan_block_comment, scan_line_comment, scan_number, scan_string,
+};
 
 const KEYWORDS: &[&str] = &[
-    "fn", "let", "mut", "pub", "struct", "enum", "impl", "use", "crate", "mod", "if", "else",
-    "match", "return", "async", "await",
+    "fn", "let", "mut", "pub", "struct", "enum", "impl", "use", "crate", "mod", "async", "await",
+    "self", "Self", "where", "trait", "type",
+];
+const CONTROLS: &[&str] = &[
+    "if", "else", "match", "return", "loop", "while", "for", "break", "continue",
+];
+const TYPES: &[&str] = &[
+    "i32", "i64", "u32", "u64", "usize", "isize", "bool", "char", "str", "String", "Vec", "Option",
+    "Result",
 ];
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -24,9 +30,14 @@ pub fn lex(text: &str) -> Vec<Token> {
             }
             '"' => scan_string(&chars, &mut i, &mut tokens, '"'),
             c if c.is_ascii_digit() => scan_number(&chars, &mut i, &mut tokens),
-            c if is_ident_start(c) => {
-                scan_ident_or_keyword(&chars, &mut i, &mut tokens, KEYWORDS)
-            }
+            c if is_ident_start(c) => crate::lexers::scan_ident_classified(
+                &chars,
+                &mut i,
+                &mut tokens,
+                KEYWORDS,
+                CONTROLS,
+                TYPES,
+            ),
             '{' | '}' | '(' | ')' | '[' | ']' | ';' | ',' | '.' | ':' | '=' | '+' | '-' | '*'
             | '!' | '?' | '<' | '>' => {
                 push(&mut tokens, i, i + 1, TokenKind::Punct);

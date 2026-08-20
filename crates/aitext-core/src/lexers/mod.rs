@@ -19,13 +19,11 @@ pub fn take_while(chars: &[char], i: &mut usize, pred: impl Fn(char) -> bool) ->
     }
     (start, *i)
 }
-
 pub fn push(tokens: &mut Vec<Token>, start: usize, end: usize, kind: TokenKind) {
     if end > start {
         tokens.push(Token { start, end, kind });
     }
 }
-
 pub fn is_ident_start(ch: char) -> bool {
     ch.is_ascii_alphabetic() || ch == '_'
 }
@@ -34,7 +32,12 @@ pub fn is_ident_continue(ch: char) -> bool {
     ch.is_ascii_alphanumeric() || ch == '_'
 }
 
-pub fn scan_line_comment(chars: &[char], i: &mut usize, tokens: &mut Vec<Token>, starter_len: usize) {
+pub fn scan_line_comment(
+    chars: &[char],
+    i: &mut usize,
+    tokens: &mut Vec<Token>,
+    starter_len: usize,
+) {
     let start = *i;
     *i += starter_len;
     while *i < chars.len() && chars[*i] != '\n' {
@@ -85,12 +88,43 @@ pub fn scan_ident_or_keyword(
     tokens: &mut Vec<Token>,
     keywords: &[&str],
 ) {
+    scan_ident_classified(chars, i, tokens, keywords, &[], &[]);
+}
+
+pub fn scan_ident_classified(
+    chars: &[char],
+    i: &mut usize,
+    tokens: &mut Vec<Token>,
+    keywords: &[&str],
+    controls: &[&str],
+    types: &[&str],
+) {
     let (start, end) = take_while(chars, i, is_ident_continue);
     let word: String = chars[start..end].iter().collect();
-    let kind = if keywords.contains(&word.as_str()) {
+    let mut kind = if controls.contains(&word.as_str()) {
+        TokenKind::Control
+    } else if types.contains(&word.as_str()) {
+        TokenKind::Type
+    } else if keywords.contains(&word.as_str()) {
         TokenKind::Keyword
     } else {
         TokenKind::Ident
     };
+    if kind == TokenKind::Ident {
+        let mut j = end;
+        while j < chars.len() && chars[j].is_whitespace() {
+            j += 1;
+        }
+        if j < chars.len() && chars[j] == char::from_u32(40).unwrap() {
+            kind = TokenKind::Function;
+        } else if word
+            .chars()
+            .next()
+            .map(|c| c.is_ascii_uppercase())
+            .unwrap_or(false)
+        {
+            kind = TokenKind::Type;
+        }
+    }
     push(tokens, start, end, kind);
 }

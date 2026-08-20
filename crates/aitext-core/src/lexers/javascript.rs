@@ -1,12 +1,31 @@
 use crate::highlight::{Token, TokenKind};
 use crate::lexers::{
-    is_ident_start, push, scan_block_comment, scan_ident_or_keyword, scan_line_comment, scan_number,
-    scan_string,
+    is_ident_start, push, scan_block_comment, scan_line_comment, scan_number, scan_string,
 };
 
 const KEYWORDS: &[&str] = &[
-    "function", "let", "const", "var", "return", "if", "else", "for", "while", "class", "import",
-    "export", "async", "await", "type", "interface",
+    "function",
+    "let",
+    "const",
+    "var",
+    "class",
+    "import",
+    "export",
+    "async",
+    "await",
+    "type",
+    "interface",
+    "new",
+    "this",
+    "typeof",
+    "instanceof",
+];
+const CONTROLS: &[&str] = &[
+    "if", "else", "for", "while", "return", "break", "continue", "switch", "case", "try", "catch",
+    "finally",
+];
+const TYPES: &[&str] = &[
+    "string", "number", "boolean", "any", "void", "never", "Promise", "Array",
 ];
 
 pub fn lex(text: &str) -> Vec<Token> {
@@ -32,7 +51,14 @@ pub fn lex(text: &str) -> Vec<Token> {
             continue;
         }
         if is_ident_start(c) {
-            scan_ident_or_keyword(&chars, &mut i, &mut tokens, KEYWORDS);
+            crate::lexers::scan_ident_classified(
+                &chars,
+                &mut i,
+                &mut tokens,
+                KEYWORDS,
+                CONTROLS,
+                TYPES,
+            );
             continue;
         }
         if matches!(c, '{' | '}' | '(' | ')' | '[' | ']' | ';' | ',' | '.' | ':') {

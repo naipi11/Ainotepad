@@ -3,7 +3,7 @@ use crate::snapshot::CompletionSnapshot;
 use crate::state::{CompletionState, GhostSuggestion};
 use crate::transport::{CompletionError, Transport};
 
-pub const DEFAULT_DEBOUNCE_MS: u64 = 250;
+pub const DEFAULT_DEBOUNCE_MS: u64 = 60;
 pub const FAILURES_BEFORE_BACKOFF: u32 = 3;
 pub const BACKOFF_MS: u64 = 5000;
 
@@ -57,6 +57,12 @@ impl<T: Transport> CompletionEngine<T> {
         self.state
     }
 
+    /// Identifies the currently valid document/configuration snapshot.
+    /// Background workers must echo this value before their result can apply.
+    pub fn generation(&self) -> u64 {
+        self.generation
+    }
+
     pub fn last_error(&self) -> Option<&str> {
         self.last_error.as_deref()
     }
@@ -66,6 +72,22 @@ impl<T: Transport> CompletionEngine<T> {
         if self.state == CompletionState::Suggested {
             self.state = CompletionState::Empty;
         }
+    }
+
+    pub fn invalidate(&mut self) {
+        self.generation += 1;
+        self.pending = None;
+        self.inflight = None;
+        self.inflight_prefix.clear();
+        self.suggestion = None;
+        self.last_error = None;
+        self.failures = 0;
+        self.backoff_until = 0;
+        self.state = if self.configured {
+            CompletionState::Empty
+        } else {
+            CompletionState::NotConfigured
+        };
     }
 
     pub fn take_accept(&mut self) -> Option<String> {
@@ -119,7 +141,12 @@ impl<T: Transport> CompletionEngine<T> {
             self.pending = None;
             return EngineEvent::StateChanged;
         }
-        if !self.enabled || composing || !selection_empty || readonly || too_large || now_ms < self.backoff_until
+        if !self.enabled
+            || composing
+            || !selection_empty
+            || readonly
+            || too_large
+            || now_ms < self.backoff_until
         {
             self.pending = None;
             if now_ms < self.backoff_until {
@@ -150,7 +177,11 @@ impl<T: Transport> CompletionEngine<T> {
         EngineEvent::StartRequest { snapshot }
     }
 
-    pub fn on_result(&mut self, generation: u64, result: Result<String, CompletionError>) -> EngineEvent {
+    pub fn on_result(
+        &mut self,
+        generation: u64,
+        result: Result<String, CompletionError>,
+    ) -> EngineEvent {
         self.on_result_at(generation, result, 0)
     }
 
@@ -166,16 +197,7 @@ impl<T: Transport> CompletionEngine<T> {
         self.inflight = None;
         match result {
             Ok(raw) => {
-                let prefix_tail: String = self
-                    .inflight_prefix
-                    .chars()
-                    .rev()
-                    .take(80)
-                    .collect::<String>()
-                    .chars()
-                    .rev()
-                    .collect();
-                if let Some(text) = shape_suggestion(&raw, &prefix_tail) {
+                if let Some(text) = shape_suggestion(&raw, &self.inflight_prefix) {
                     self.suggestion = Some(GhostSuggestion { text, generation });
                     self.state = CompletionState::Suggested;
                     self.failures = 0;
@@ -251,9 +273,9 @@ mod tests {
         engine.configured = true;
         let ev = engine.on_change(0, sample_snapshot(), true, false, false, false);
         assert!(matches!(ev, EngineEvent::None));
-        let ev = engine.on_tick(249);
+        let ev = engine.on_tick(59);
         assert!(matches!(ev, EngineEvent::None));
-        let ev = engine.on_tick(250);
+        let ev = engine.on_tick(60);
         match ev {
             EngineEvent::StartRequest { snapshot } => assert_eq!(snapshot.generation, 1),
             _ => panic!("expected start"),
@@ -272,6 +294,23 @@ mod tests {
     }
 
     #[test]
+    fn engine_invalidate_makes_old_snapshot_stale() {
+        let mut engine = CompletionEngine::new(FakeTransport::ok("xyz"));
+        engine.configured = true;
+        engine.on_change(0, sample_snapshot(), true, false, false, false);
+        let generation = match engine.on_tick(60) {
+            EngineEvent::StartRequest { snapshot } => snapshot.generation,
+            _ => panic!("expected request"),
+        };
+
+        engine.invalidate();
+        engine.on_result(generation, Ok("old completion".into()));
+
+        assert!(engine.suggestion().is_none());
+        assert_eq!(engine.state(), CompletionState::Empty);
+    }
+
+    #[test]
     fn typed_prefix_trims_locally() {
         let mut engine = CompletionEngine::new(FakeTransport::ok("xyz"));
         engine.force_suggestion("hello");
@@ -283,13 +322,24 @@ mod tests {
         let mut engine = CompletionEngine::new(FakeTransport::fail());
         engine.configured = true;
         for i in 1..=3 {
-            engine.on_change(i as u64 * 1000, sample_snapshot(), true, false, false, false);
+            engine.on_change(
+                i as u64 * 1000,
+                sample_snapshot(),
+                true,
+                false,
+                false,
+                false,
+            );
             let ev = engine.on_tick(i as u64 * 1000 + 250);
             let gen = match ev {
                 EngineEvent::StartRequest { snapshot } => snapshot.generation,
                 _ => panic!("expected start"),
             };
-            engine.on_result_at(gen, Err(CompletionError::RequestFailed("nope".into())), i as u64 * 1000 + 250);
+            engine.on_result_at(
+                gen,
+                Err(CompletionError::RequestFailed("nope".into())),
+                i as u64 * 1000 + 250,
+            );
         }
         engine.on_change(4000, sample_snapshot(), true, false, false, false);
         let ev = engine.on_tick(4250);

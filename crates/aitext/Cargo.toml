@@ -12,6 +12,15 @@ toml = "0.8"
 eframe = { version = "0.31", default-features = true }
 egui = "0.31"
 rfd = "0.15"
+image = { version = "0.25", default-features = false, features = ["png"] }
 
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.58", features = ["Win32_Foundation", "Win32_Security_Cryptography"] }
+windows = { version = "0.58", features = ["Win32_Foundation", "Win32_Globalization", "Win32_Security_Cryptography"] }
+
+[package.metadata.winres]
+OriginalFilename = "aitext.exe"
+FileDescription = "Aitext"
+ProductName = "Aitext"
+
+[build-dependencies]
+embed-resource = "2"

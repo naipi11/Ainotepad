@@ -1,21 +1,29 @@
 use std::sync::mpsc::{self, Receiver, TryRecvError};
 use std::thread;
 
-
 use aitext_ai::{
     take_snapshot, CancelFlag, CompletionEngine, CompletionError, CompletionState, EngineEvent,
-    NullTransport, OpenAiConfig, OpenAiTransport, Transport,
+    NullTransport, OpenAiTransport, ProfileRequestConfig, Transport,
 };
 
 use crate::commands::{AitextApp, Command};
+use crate::i18n::{completion_state_key, text, UiMessage};
+use aitext_core::Motion;
 
-type CompletionInbox = Receiver<(u64, Result<String, CompletionError>)>;
+pub(crate) type CompletionInbox = Receiver<CompletionWorkerResult>;
+
+pub(crate) struct CompletionWorkerResult {
+    profile_id: String,
+    profile_revision: u64,
+    completion_generation: u64,
+    result: Result<String, CompletionError>,
+}
 
 pub struct CompletionUiState {
     pub engine: CompletionEngine<NullTransport>,
     pub composing: bool,
     pub inflight: Option<u64>,
-    pub inbox: Option<CompletionInbox>,
+    pub(crate) inbox: Option<CompletionInbox>,
     pub cancel: CancelFlag,
     pub clock_ms: u64,
 }
@@ -34,6 +42,42 @@ impl Default for CompletionUiState {
 }
 
 impl AitextApp {
+    pub fn delete_backward(&mut self) {
+        if let Some(doc) = self.workspace.current_mut() {
+            if !doc.is_readonly() {
+                doc.delete_backward();
+            }
+        }
+        self.invalidate_and_queue();
+    }
+
+    pub fn delete_forward(&mut self) {
+        if let Some(doc) = self.workspace.current_mut() {
+            if !doc.is_readonly() {
+                doc.delete_forward();
+            }
+        }
+        self.invalidate_and_queue();
+    }
+
+    pub fn move_caret(&mut self, motion: Motion, extend: bool) {
+        if let Some(doc) = self.workspace.current_mut() {
+            doc.move_caret(motion, extend);
+        }
+        self.invalidate_and_queue();
+    }
+
+    pub fn note_caret_changed(&mut self) {
+        self.invalidate_and_queue();
+    }
+
+    pub fn invalidate_and_queue(&mut self) {
+        self.completion.engine.reject();
+        self.completion.cancel.cancel();
+        self.completion.inflight = None;
+        self.queue_completion();
+    }
+
     pub fn handle_text_input(&mut self, text: &str) {
         if let Some(current) = self.completion.engine.suggestion() {
             if current.text.starts_with(text) {
@@ -82,6 +126,10 @@ impl AitextApp {
             return;
         };
         let snapshot = take_snapshot(doc, 0);
+        if snapshot.prefix.trim().is_empty() {
+            self.completion.engine.reject();
+            return;
+        }
         let selection_empty = doc.selection().is_empty();
         let readonly = doc.is_readonly();
         let composing = self.completion.composing;
@@ -98,12 +146,31 @@ impl AitextApp {
     }
 
     pub fn refresh_completion_config(&mut self) {
-        let configured = !self.config.base_url.trim().is_empty()
-            && !self.config.model.trim().is_empty()
-            && self.api_key.as_ref().map(|k| !k.trim().is_empty()).unwrap_or(false);
-        self.completion.engine.configured = configured;
+        self.completion.engine.configured = self.active_request_config().is_some();
         self.completion.engine.enabled = self.config.ghost_enabled;
         self.completion.engine.debounce_ms = self.config.debounce_ms;
+    }
+
+    /// Copies the only profile and key that may be used by a background request.
+    /// The key stays in memory only long enough to build the worker transport.
+    pub fn active_request_config(&self) -> Option<ProfileRequestConfig> {
+        let profile = self.config.active_profile()?;
+        let api_key = self.api_key.as_deref()?.trim();
+        if profile.base_url.trim().is_empty()
+            || profile.selected_model.trim().is_empty()
+            || api_key.is_empty()
+        {
+            return None;
+        }
+        Some(ProfileRequestConfig {
+            provider: profile.provider,
+            adapter: profile.adapter,
+            base_url: profile.base_url.clone(),
+            api_key: api_key.to_string(),
+            model: profile.selected_model.clone(),
+            timeout_ms: profile.timeout_ms,
+            allow_http: profile.allow_http,
+        })
     }
 
     pub fn poll_completion(&mut self, now_ms: u64) {
@@ -123,18 +190,40 @@ impl AitextApp {
         };
         loop {
             match inbox.try_recv() {
-                Ok((generation, result)) => {
-                    self.last_engine_event =
-                        Some(self.completion.engine.on_result_at(generation, result, now_ms));
+                Ok(worker_result) => {
+                    let still_current = self.config.active_profile_id.as_deref()
+                        == Some(worker_result.profile_id.as_str())
+                        && worker_result.profile_revision == self.profile_revision
+                        && worker_result.completion_generation
+                            == self.completion.engine.generation();
+                    if !still_current {
+                        continue;
+                    }
+
+                    self.last_engine_event = Some(self.completion.engine.on_result_at(
+                        worker_result.completion_generation,
+                        worker_result.result,
+                        now_ms,
+                    ));
                     self.completion.inflight = None;
                     if let Some(detail) = self.completion.engine.last_error() {
-                        self.status = detail.to_string();
+                        self.status = Some(if detail.chars().count() > 48 {
+                            UiMessage::NoSuggestion
+                        } else {
+                            UiMessage::CompletionDetail(detail.to_string())
+                        });
                     } else if matches!(
                         self.completion.engine.state(),
-                        CompletionState::Suggested | CompletionState::Empty | CompletionState::NoSuggestion
+                        CompletionState::Suggested
+                            | CompletionState::Empty
+                            | CompletionState::NoSuggestion
                     ) {
-                        if self.status == "testing connection" || self.status.starts_with("http ") {
-                            self.status.clear();
+                        if self
+                            .status
+                            .as_ref()
+                            .is_some_and(UiMessage::is_completion_feedback)
+                        {
+                            self.status = None;
                         }
                     }
                 }
@@ -151,11 +240,24 @@ impl AitextApp {
     }
 
     fn start_completion_request(&mut self, snapshot: aitext_ai::CompletionSnapshot) {
-        let Some(api_key) = self.api_key.clone().filter(|k| !k.trim().is_empty()) else {
-            self.last_engine_event = Some(self.completion.engine.on_result(
-                snapshot.generation,
-                Err(CompletionError::NotConfigured),
-            ));
+        let Some(profile_id) = self
+            .config
+            .active_profile()
+            .map(|profile| profile.id.clone())
+        else {
+            self.last_engine_event = Some(
+                self.completion
+                    .engine
+                    .on_result(snapshot.generation, Err(CompletionError::NotConfigured)),
+            );
+            return;
+        };
+        let Some(request_config) = self.active_request_config() else {
+            self.last_engine_event = Some(
+                self.completion
+                    .engine
+                    .on_result(snapshot.generation, Err(CompletionError::NotConfigured)),
+            );
             return;
         };
         self.completion.cancel.cancel();
@@ -165,17 +267,18 @@ impl AitextApp {
         self.completion.inbox = Some(rx);
         self.completion.inflight = Some(snapshot.generation);
         let transport = OpenAiTransport {
-            config: OpenAiConfig {
-                base_url: self.config.base_url.clone(),
-                api_key,
-                model: self.config.model.clone(),
-                timeout_ms: self.config.timeout_ms,
-                allow_http: self.config.allow_http,
-            },
+            config: request_config,
         };
+        let profile_revision = self.profile_revision;
+        let completion_generation = snapshot.generation;
         thread::spawn(move || {
             let result = transport.complete(snapshot.clone(), cancel);
-            let _ = tx.send((snapshot.generation, result));
+            let _ = tx.send(CompletionWorkerResult {
+                profile_id,
+                profile_revision,
+                completion_generation,
+                result,
+            });
         });
     }
 }
@@ -186,10 +289,12 @@ impl AitextApp {
     }
 
     pub fn completion_label_now(&self) -> &'static str {
-        self.completion.engine.state().label()
+        text(
+            self.locale(),
+            completion_state_key(self.completion.engine.state()),
+        )
     }
 }
-
 
 pub fn apply_completion_command(app: &mut AitextApp, command: Command) {
     match command {
@@ -202,4 +307,52 @@ pub fn apply_completion_command(app: &mut AitextApp, command: Command) {
 #[allow(dead_code)]
 fn state_from_engine(state: CompletionState) -> &'static str {
     state.label()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::i18n::UiLanguage;
+
+    #[test]
+    fn completion_label_follows_the_ui_language() {
+        let mut app = AitextApp::new_for_test();
+        assert_eq!(app.completion_label_now(), "empty");
+
+        app.set_ui_language(UiLanguage::ZhCn);
+        assert_eq!(app.completion_label_now(), "空闲");
+    }
+
+    #[test]
+    fn stale_worker_result_cannot_apply_after_profile_revision_changes() {
+        let mut app = AitextApp::new_for_test();
+        app.dispatch(Command::NewTab);
+        let mut profile = crate::config::ApiProfile::new("OpenAI", aitext_ai::ProviderKind::OpenAi);
+        profile.base_url = "https://api.openai.com/v1".into();
+        profile.remember_model("gpt-test");
+        app.config.add_profile(profile);
+        app.api_key = Some("profile-key".into());
+        app.refresh_completion_config();
+
+        let profile_id = app.config.active_profile().unwrap().id.clone();
+        let old_revision = app.profile_revision;
+        let old_generation = app.completion.engine.generation();
+        app.profile_changed();
+        app.status = Some(UiMessage::SettingsSaved);
+
+        let (tx, rx) = mpsc::channel();
+        app.completion.inbox = Some(rx);
+        tx.send(CompletionWorkerResult {
+            profile_id,
+            profile_revision: old_revision,
+            completion_generation: old_generation,
+            result: Ok("stale completion".into()),
+        })
+        .unwrap();
+
+        app.drain_completion(100);
+
+        assert!(app.ghost_text().is_none());
+        assert_eq!(app.status, Some(UiMessage::SettingsSaved));
+    }
 }

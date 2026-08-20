@@ -7,6 +7,7 @@ pub mod completion;
 pub mod config;
 pub mod editor_view;
 pub mod find_bar;
+pub mod i18n;
 pub mod ime;
 pub mod painter;
 pub mod secrets;

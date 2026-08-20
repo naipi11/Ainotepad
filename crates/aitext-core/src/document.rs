@@ -1,10 +1,10 @@
 use ropey::Rope;
 
-use crate::selection::{Offset, Selection};
-use crate::motion::{Motion, PAGE_LINES};
-use crate::undo::Edit;
-use crate::language::LanguageId;
 use crate::encoding::{majority_newline, Encoding, NewlineStyle};
+use crate::language::LanguageId;
+use crate::motion::{Motion, PAGE_LINES};
+use crate::selection::{Offset, Selection};
+use crate::undo::Edit;
 
 #[derive(Clone, Debug)]
 pub struct Document {

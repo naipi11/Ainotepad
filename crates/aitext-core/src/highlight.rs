@@ -8,6 +8,9 @@ pub enum TokenKind {
     String,
     Number,
     Keyword,
+    Control,
+    Type,
+    Function,
     Ident,
     Punct,
 }
@@ -97,6 +100,7 @@ mod tests {
         assert!(tokens
             .iter()
             .any(|t| t.kind == TokenKind::Keyword && t.start == 0 && t.end == 2));
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Function));
         assert!(tokens.iter().any(|t| t.kind == TokenKind::Comment));
     }
 
@@ -105,6 +109,13 @@ mod tests {
         let tokens = highlight("{\"ok\": true}", LanguageId::Json);
         assert!(tokens.iter().any(|t| t.kind == TokenKind::String));
         assert!(tokens.iter().any(|t| t.kind == TokenKind::Keyword));
+    }
+
+    #[test]
+    fn python_highlights_print_and_number() {
+        let tokens = highlight("a = 1\nprint(c)", LanguageId::Python);
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Number));
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Function));
     }
 
     #[test]

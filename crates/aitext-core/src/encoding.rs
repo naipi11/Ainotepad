@@ -151,8 +151,7 @@ impl Document {
             SizeClass::TooLarge => return Err(OpenError::TooLarge),
             SizeClass::Editable | SizeClass::ReadOnly => {}
         }
-        let (text, encoding, newline) =
-            decode_bytes(bytes).map_err(OpenError::Decode)?;
+        let (text, encoding, newline) = decode_bytes(bytes).map_err(OpenError::Decode)?;
         let mut doc = Document::from_text(text);
         doc.set_encoding(encoding);
         doc.set_newline_style(newline);
@@ -213,7 +212,10 @@ mod tests {
         let (text, _, nl) = decode_bytes(b"a\r\nb\r\nc\nd").unwrap();
         assert_eq!(nl, NewlineStyle::Crlf);
         assert_eq!(text, "a\r\nb\r\nc\nd");
-        assert_eq!(encode_text(&text, Encoding::Utf8).unwrap(), b"a\r\nb\r\nc\nd");
+        assert_eq!(
+            encode_text(&text, Encoding::Utf8).unwrap(),
+            b"a\r\nb\r\nc\nd"
+        );
     }
 
     #[test]
