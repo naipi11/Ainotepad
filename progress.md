@@ -73,6 +73,15 @@
 - Updated the code sample so `print(` stays as the typed prefix and `"Hello, World!")` is revealed character by character after the sentence suggestion; both English and Chinese GIFs now show this two-stage completion flow.
 - Verified PNG dimensions (1672×941), GIF dimensions (1200×675), 32/28 GIF frames at 8 fps, and clean `git diff --check`. No application or desktop automation was used.
 
+## 2026-08-21 — Ainotepad v0.1.0 replacement implementation
+
+- Completed Markdown-default document types and case-insensitive mappings for mainstream text/programming extensions.
+- Added C#, HTML, and CSS highlighting and routed the new language IDs through AI completion context.
+- Rebuilt editor painting around a shared line Galley, fixing mixed Chinese/Latin baseline and caret/ghost alignment.
+- Added localized document-type selection in the status rail and Edit menu; selection preserves text/caret and refreshes highlighting.
+- Renamed local packages/binary/assets to Ainotepad, added legacy Aitext config migration, refreshed current documentation, packaging, and branded media.
+- Local verification passed: 105 Ainotepad tests, 37 Ainotepad AI tests, 38 Ainotepad core tests, formatting, and Release build. No desktop application was launched.
+
 ## 2026-08-20 — Aitext v0.1.0 formal release planning
 
 - User requested Windows installer, repository rename to Aitext, formal GitHub Release, bilingual Quick Start README, and English/Chinese showcase PNG/GIF assets.

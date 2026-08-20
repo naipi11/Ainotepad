@@ -25,3 +25,13 @@
 - Final downloaded assets were verified locally. The installer is `NotSigned` by design; the portable archive contains only `aitext.exe`, `LICENSE`, `README.md`, and `README.zh-CN.md`. The installer was not run.
 - The initial broad old-release deletion loop stopped safely when it reached tag `v0.1.1`, which had no GitHub Release. Cleanup was corrected to delete only the two actual old Releases (`v0.2.5`, `v0.2.6`) and then delete all old tag refs exactly; verification showed only `v0.1.0` remains.
 - The first multi-input `ffprobe` invocation was invalid because `ffprobe` accepts one input per command. It was corrected to four individual probes; all PNG/GIF metadata checks passed.
+
+## 2026-08-21 — Ainotepad implementation evidence
+
+- Markdown is now the default language for untitled documents; unknown and extensionless files fall back to Markdown while plain-text extensions remain Plain Text.
+- Added C#, HTML, and CSS lexer routing with coverage and unterminated-input tests. The renamed completion snapshot maps all new language IDs to stable context names.
+- Replaced per-character editor painting with one egui Galley per line. Mixed Chinese/Latin text, caret, selection, IME preedit, and ghost text now use shared measured layout coordinates.
+- Added a localized status-bar document-type selector with Text/Programming groups and an Edit-menu access path. Selecting a type preserves document text/caret and invalidates stale completion context.
+- Renamed the local Cargo packages and executable to Ainotepad/ainotepad.exe. Config migration targets LOCALAPPDATA/Ainotepad and reads legacy APPDATA or LOCALAPPDATA Aitext directories without deleting them.
+- Updated current README, product/design docs, Inno/workflows, release notes, and bilingual showcase media. Current media uses Ainotepad branding and 32/28-frame two-stage sentence/code reveal GIFs.
+- Local validation: workspace tests 105 app + 37 AI + 38 core passed; cargo fmt check passed; cargo build --release -p ainotepad passed; only the four pre-existing unused default-config helper warnings remain.

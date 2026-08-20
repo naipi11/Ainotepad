@@ -1,10 +1,10 @@
-# Aitext Paper Cut redesign and bilingual UI
+# Ainotepad v0.1.0 replacement execution
 
-## Current mission: Aitext v0.1.0 formal release
+## Current mission: Ainotepad v0.1.0 direct replacement
 
-The active release plan is [docs/superpowers/plans/2026-08-20-aitext-v0.1.0-release.md](docs/superpowers/plans/2026-08-20-aitext-v0.1.0-release.md). User-approved decisions: destructive restart strategy B, unsigned installer strategy A, Paper Cut bilingual media, no desktop automation. Current phase: v0.1.0 published and verified; final handoff complete.
+The active release plan is [docs/superpowers/plans/2026-08-20-ainotepad-v0.1.0-replacement.md](docs/superpowers/plans/2026-08-20-ainotepad-v0.1.0-replacement.md). User-approved decisions: direct Aitext → Ainotepad replacement, numeric version remains v0.1.0, Markdown-default document types, unified mixed-script layout, unsigned installer strategy, Paper Cut bilingual media, and no desktop automation. Current phase: local implementation complete through packaging; hosted RC proof pending.
 
-Release phases: local packaging/docs/media → RC workflow proof → repository rename/main replacement/old release deletion → v0.1.0 tag and Release verification → final handoff. All phases are complete.
+Release phases: core language/highlighting → shared editor layout → document-type selector → Ainotepad package/config rename → docs/media/package → RC workflow proof → repository rename/main replacement/old Release replacement → final handoff.
 
 ## Goal
 

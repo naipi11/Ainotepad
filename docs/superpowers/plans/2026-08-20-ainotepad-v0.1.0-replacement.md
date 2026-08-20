@@ -17,7 +17,7 @@
 - Support C, C++, C#, Python, Rust, JavaScript, TypeScript, HTML, CSS, Markdown, Plain Text, JSON, TOML, PowerShell, Batch, and INI.
 - Use one line-level egui layout for mixed Chinese/Latin text, caret, IME preedit, selection, and ghost text.
 - Preserve the Paper Cut shell, themes, provider profiles, DPAPI protection, IME behavior, shortcuts, and lightweight no-sidebar boundary.
-- Migrate %LOCALAPPDATA%\Aitext to %LOCALAPPDATA%\Ainotepad without logging secrets or automatically deleting the legacy directory.
+- Migrate legacy %APPDATA%\Aitext or %LOCALAPPDATA%\Aitext to %LOCALAPPDATA%\Ainotepad without logging secrets or automatically deleting the legacy directory.
 - Do not make live vendor API requests, launch the desktop app, launch the installer, or use desktop automation.
 - Do not use git reset --hard, git checkout --, git add -A, or git add ..
 - Stage only explicitly reviewed paths and preserve unrelated user changes.

@@ -27,7 +27,7 @@ Included:
 - Syntax highlighting for Markdown, plain text, C, C++, C#, Python, Rust, JavaScript, TypeScript, HTML, CSS, JSON, TOML, PowerShell, Batch, and INI.
 - Localized English and Simplified Chinese labels for the document-type selector.
 - Full Aitext → Ainotepad product and repository replacement while retaining numeric version `0.1.0`.
-- Safe migration of the existing `%LOCALAPPDATA%\Aitext` configuration directory to `%LOCALAPPDATA%\Ainotepad` without logging or exposing API keys.
+- Safe migration of legacy `%APPDATA%\Aitext` or `%LOCALAPPDATA%\Aitext` configuration directories to `%LOCALAPPDATA%\Ainotepad` without logging or exposing API keys.
 - Updated bilingual README, Quick Start, release notes, installer, CI/release workflows, and English/Chinese showcase PNG/GIF assets.
 
 Not included:
@@ -205,7 +205,7 @@ The numeric workspace version remains `0.1.0`.
 On startup:
 
 1. Prefer `%LOCALAPPDATA%\Ainotepad`.
-2. If it does not exist and `%LOCALAPPDATA%\Aitext` exists, copy the legacy configuration and DPAPI secret files into the Ainotepad directory while preserving file contents and permissions as far as Windows permits.
+2. If it does not exist and either `%APPDATA%\Aitext` or `%LOCALAPPDATA%\Aitext` exists, copy the legacy configuration and DPAPI secret files into the Ainotepad directory while preserving file contents and permissions as far as Windows permits.
 3. Load and validate the Ainotepad configuration.
 4. Keep the old Aitext directory as a recoverable backup; never log or display secret contents.
 
