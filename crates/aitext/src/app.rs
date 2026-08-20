@@ -6,7 +6,7 @@ use crate::config::{remember_recent, save_config};
 use crate::editor_view::draw_editor;
 use crate::find_bar::draw_find_bar;
 use crate::i18n::{localized_document_name, text, TextKey, UiMessage};
-use crate::status_bar::draw_status_bar;
+use crate::status_bar::{draw_language_selector, draw_status_bar};
 
 fn should_close_settings_for_outside_click(
     settings_was_open: bool,
@@ -174,6 +174,9 @@ impl eframe::App for AitextApp {
                         if ui.button(text(locale, TextKey::EditIndent)).clicked() {
                             self.dispatch(Command::Indent);
                         }
+                        ui.menu_button(text(locale, TextKey::StatusLanguage), |ui| {
+                            draw_language_selector(ui, self);
+                        });
                     });
                     ui.menu_button(text(locale, TextKey::MenuFind), |ui| {
                         if ui.button(text(locale, TextKey::FindOpen)).clicked() {

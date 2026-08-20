@@ -1,21 +1,30 @@
-use aitext_core::{Encoding, NewlineStyle};
+use aitext_core::{Encoding, LanguageId, NewlineStyle};
 use egui::Ui;
 
 use crate::commands::AitextApp;
 use crate::config::StatusItem;
-use crate::i18n::TextKey;
+use crate::i18n::{text, Locale, TextKey};
 use crate::theme::shell_colors;
 
-pub fn draw_status_bar(ui: &mut Ui, app: &AitextApp) {
+pub fn draw_status_bar(ui: &mut Ui, app: &mut AitextApp) {
     let shell = shell_colors(app.config.theme);
+    let items = app.config.status_items.clone();
     ui.horizontal(|ui| {
         let mut first = true;
-        for item in &app.config.status_items {
-            if let Some(text) = status_text(app, *item) {
+        for item in items {
+            if item == StatusItem::Language && app.workspace.current().is_some() {
                 if !first {
                     ui.separator();
                 }
-                let color = if *item == StatusItem::Completion
+                draw_language_selector(ui, app);
+                first = false;
+                continue;
+            }
+            if let Some(status) = status_text(app, item) {
+                if !first {
+                    ui.separator();
+                }
+                let color = if item == StatusItem::Completion
                     && matches!(
                         app.completion.engine.state(),
                         aitext_ai::CompletionState::Suggested
@@ -24,12 +33,62 @@ pub fn draw_status_bar(ui: &mut Ui, app: &AitextApp) {
                 } else {
                     shell.muted_text
                 };
-                ui.label(egui::RichText::new(text).color(color));
+                ui.label(egui::RichText::new(status).color(color));
                 first = false;
             }
         }
     });
 }
+
+pub fn language_label(locale: Locale, language: LanguageId) -> &'static str {
+    let key = match language {
+        LanguageId::Markdown => TextKey::LanguageMarkdown,
+        LanguageId::PlainText => TextKey::LanguagePlainText,
+        LanguageId::C => TextKey::LanguageC,
+        LanguageId::Cpp => TextKey::LanguageCpp,
+        LanguageId::CSharp => TextKey::LanguageCSharp,
+        LanguageId::Python => TextKey::LanguagePython,
+        LanguageId::Rust => TextKey::LanguageRust,
+        LanguageId::JavaScript => TextKey::LanguageJavaScript,
+        LanguageId::TypeScript => TextKey::LanguageTypeScript,
+        LanguageId::Html => TextKey::LanguageHtml,
+        LanguageId::Css => TextKey::LanguageCss,
+        LanguageId::Json => TextKey::LanguageJson,
+        LanguageId::Toml => TextKey::LanguageToml,
+        LanguageId::PowerShell => TextKey::LanguagePowerShell,
+        LanguageId::Batch => TextKey::LanguageBatch,
+        LanguageId::Ini => TextKey::LanguageIni,
+    };
+    text(locale, key)
+}
+
+pub fn draw_language_selector(ui: &mut Ui, app: &mut AitextApp) {
+    let Some(current) = app.workspace.current().map(|doc| doc.language()) else {
+        ui.label(language_label(app.locale(), LanguageId::Markdown));
+        return;
+    };
+    let locale = app.locale();
+    let mut selected = current;
+    egui::ComboBox::from_id_salt("document-language")
+        .selected_text(language_label(locale, current))
+        .show_ui(ui, |ui| {
+            ui.weak(text(locale, TextKey::DocumentTypeText));
+            for language in [LanguageId::Markdown, LanguageId::PlainText] {
+                ui.selectable_value(&mut selected, language, language_label(locale, language));
+            }
+            ui.separator();
+            ui.weak(text(locale, TextKey::DocumentTypeProgramming));
+            for language in LanguageId::ALL.iter().copied().filter(|language| {
+                !matches!(language, LanguageId::Markdown | LanguageId::PlainText)
+            }) {
+                ui.selectable_value(&mut selected, language, language_label(locale, language));
+            }
+        });
+    if selected != current {
+        app.set_document_language(selected);
+    }
+}
+
 fn status_text(app: &AitextApp, item: StatusItem) -> Option<String> {
     match item {
         StatusItem::Cursor => {
@@ -54,7 +113,7 @@ fn status_text(app: &AitextApp, item: StatusItem) -> Option<String> {
         StatusItem::Language => app
             .workspace
             .current()
-            .map(|doc| format!("{:?}", doc.language())),
+            .map(|doc| language_label(app.locale(), doc.language()).to_string()),
         StatusItem::Model => app.config.active_profile().map_or_else(
             || Some(app.tr(TextKey::ProfileUnset).into()),
             |profile| {
@@ -94,11 +153,22 @@ fn encoding_name(encoding: Encoding) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::status_text;
+    use super::{language_label, status_text};
     use crate::commands::AitextApp;
     use crate::config::{ApiProfile, StatusItem};
-    use crate::i18n::UiLanguage;
+    use crate::i18n::{Locale, UiLanguage};
     use aitext_ai::ProviderKind;
+    use aitext_core::LanguageId;
+
+    #[test]
+    fn language_labels_are_localized() {
+        assert_eq!(language_label(Locale::En, LanguageId::Markdown), "Markdown");
+        assert_eq!(
+            language_label(Locale::ZhCn, LanguageId::PlainText),
+            "纯文本"
+        );
+        assert_eq!(language_label(Locale::En, LanguageId::CSharp), "C#");
+    }
 
     #[test]
     fn status_bar_identifies_active_profile_and_model() {

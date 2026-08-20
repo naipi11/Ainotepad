@@ -1,4 +1,4 @@
-use aitext_core::{Direction, FindQuery, Match, Workspace};
+use aitext_core::{Direction, FindQuery, LanguageId, Match, Workspace};
 
 use aitext_ai::{CancelFlag, EngineEvent};
 
@@ -35,6 +35,7 @@ pub enum Command {
     Find,
     Replace,
     Settings,
+    SetDocumentLanguage(LanguageId),
     AcceptGhost,
     RejectGhost,
     NextTab,
@@ -318,6 +319,7 @@ impl AitextApp {
                 self.find.replace_visible = true;
             }
             Command::Settings => self.settings_open = !self.settings_open,
+            Command::SetDocumentLanguage(language) => self.set_document_language(language),
             Command::NextTab => self.workspace.next_tab(),
             Command::PrevTab => self.workspace.prev_tab(),
             Command::AcceptGhost => self.accept_ghost(),
@@ -338,6 +340,21 @@ impl AitextApp {
         if self.find.current >= self.find.matches.len() {
             self.find.current = 0;
         }
+    }
+
+    pub fn set_document_language(&mut self, language: LanguageId) {
+        let changed = self
+            .workspace
+            .current()
+            .map(|doc| doc.language() != language)
+            .unwrap_or(false);
+        if !changed {
+            return;
+        }
+        if let Some(doc) = self.workspace.current_mut() {
+            doc.set_language(language);
+        }
+        self.invalidate_and_queue();
     }
 
     pub fn find_step(&mut self, direction: Direction) {
@@ -374,6 +391,7 @@ mod tests {
     use super::*;
     use crate::i18n::{Locale, TextKey, UiLanguage, UiMessage};
     use crate::secrets::{load_profile_api_key, store_api_key, store_profile_api_key};
+    use aitext_core::LanguageId;
 
     fn isolated_config_dir() -> std::path::PathBuf {
         std::env::temp_dir().join(format!(
@@ -719,6 +737,20 @@ known_models = ["deepseek-v4-flash"]
         app.force_ghost("，欢迎来到我的个人网站！");
         app.queue_completion();
         assert!(app.completion.engine.suggestion().is_none());
+    }
+
+    #[test]
+    fn setting_document_language_preserves_text_and_caret() {
+        let mut app = AitextApp::new_for_test();
+        app.workspace.new_untitled();
+        let doc = app.workspace.current_mut().unwrap();
+        doc.insert("# 标题");
+        let caret = doc.selection().caret;
+        app.dispatch(Command::SetDocumentLanguage(LanguageId::Python));
+        let doc = app.workspace.current().unwrap();
+        assert_eq!(doc.language(), LanguageId::Python);
+        assert_eq!(doc.text(), "# 标题");
+        assert_eq!(doc.selection().caret, caret);
     }
 }
 use crate::ime::ImeState;
