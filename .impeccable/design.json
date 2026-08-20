@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-08-20T08:39:40Z",
-  "title": "Design System: Aitext",
+  "title": "Design System: Ainotepad",
   "extensions": {
     "colorMeta": {
       "base": {
@@ -103,7 +103,7 @@
   "components": [],
   "narrative": {
     "northStar": "Paper Cut",
-    "overview": "Paper Cut treats Aitext as a precise native Windows writing instrument: a stable rail-and-page structure follows the selected light or dark theme family while preserving the same hierarchy, spacing, and semantic colors. The shell is quiet by design so the document remains the visual subject.\n\nMeaning is intentionally scarce. Focus and navigation use blue, an available completion uses green, and the gutter uses a quiet neutral-gray divider with no semantic meaning. Simplified Chinese and English are complete interface modes, while product and protocol terms stay literal where recognition matters.",
+    "overview": "Paper Cut treats Ainotepad as a precise native Windows writing instrument: a stable rail-and-page structure follows the selected light or dark theme family while preserving the same hierarchy, spacing, and semantic colors. The shell is quiet by design so the document remains the visual subject.\n\nMeaning is intentionally scarce. Focus and navigation use blue, an available completion uses green, and the gutter uses a quiet neutral-gray divider with no semantic meaning. Simplified Chinese and English are complete interface modes, while product and protocol terms stay literal where recognition matters.",
     "keyCharacteristics": [
       "Native Windows frame and title controls; no simulated title bar.",
       "Dense horizontal rails around one full-height editor, never an IDE workbench.",
