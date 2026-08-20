@@ -9,6 +9,7 @@ pub mod editor_view;
 pub mod find_bar;
 pub mod i18n;
 pub mod ime;
+pub mod line_layout;
 pub mod painter;
 pub mod secrets;
 pub mod settings_page;
