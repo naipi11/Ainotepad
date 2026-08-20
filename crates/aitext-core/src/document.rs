@@ -43,7 +43,7 @@ impl Document {
             id: 0,
             path: None,
             untitled_number: None,
-            language: LanguageId::PlainText,
+            language: LanguageId::Markdown,
         }
     }
 
