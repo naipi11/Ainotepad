@@ -1,5 +1,8 @@
 pub mod batch;
 pub mod c_family;
+pub mod csharp;
+pub mod css;
+pub mod html;
 pub mod ini;
 pub mod javascript;
 pub mod json;

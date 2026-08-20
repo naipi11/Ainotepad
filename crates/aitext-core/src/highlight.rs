@@ -34,9 +34,10 @@ pub fn highlight(text: &str, language: LanguageId) -> Vec<Token> {
         LanguageId::Rust => lexers::rust::lex(text),
         LanguageId::Python => lexers::python::lex(text),
         LanguageId::C | LanguageId::Cpp => lexers::c_family::lex(text),
-        LanguageId::CSharp => lexers::c_family::lex(text),
+        LanguageId::CSharp => lexers::csharp::lex(text),
         LanguageId::JavaScript | LanguageId::TypeScript => lexers::javascript::lex(text),
-        LanguageId::Html | LanguageId::Css => lexers::plain::lex(text),
+        LanguageId::Html => lexers::html::lex(text),
+        LanguageId::Css => lexers::css::lex(text),
         LanguageId::PowerShell => lexers::powershell::lex(text),
         LanguageId::Batch => lexers::batch::lex(text),
         LanguageId::Ini => lexers::ini::lex(text),
@@ -121,6 +122,33 @@ mod tests {
     }
 
     #[test]
+    fn csharp_highlights_type_method_and_string() {
+        let tokens = highlight(
+            "public class Demo { string name = \"A\"; }",
+            LanguageId::CSharp,
+        );
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Keyword));
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Type));
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::String));
+    }
+
+    #[test]
+    fn html_highlights_tag_attribute_and_comment() {
+        let tokens = highlight("<!-- x --><div class=\"app\">Hi</div>", LanguageId::Html);
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Comment));
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Keyword));
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::String));
+    }
+
+    #[test]
+    fn css_highlights_selector_property_and_number() {
+        let tokens = highlight(".app { color: #fff; margin: 4px; }", LanguageId::Css);
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Ident));
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Keyword));
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Number));
+    }
+
+    #[test]
     fn tokens_cover_the_whole_document() {
         let text = "let x = 1; // c";
         let tokens = highlight(text, LanguageId::Rust);
@@ -129,5 +157,31 @@ mod tests {
         for pair in tokens.windows(2) {
             assert_eq!(pair[0].end, pair[1].start);
         }
+    }
+
+    #[test]
+    fn new_lexers_cover_their_complete_inputs() {
+        for (text, language) in [
+            (
+                "public class Demo { string name = \"A\"; }",
+                LanguageId::CSharp,
+            ),
+            ("<div class=\"app\">Hi</div>", LanguageId::Html),
+            (".app { color: #fff; margin: 4px; }", LanguageId::Css),
+        ] {
+            let tokens = highlight(text, language);
+            assert_eq!(tokens.first().unwrap().start, 0);
+            assert_eq!(tokens.last().unwrap().end, text.chars().count());
+            for pair in tokens.windows(2) {
+                assert_eq!(pair[0].end, pair[1].start);
+            }
+        }
+    }
+
+    #[test]
+    fn new_lexers_handle_unterminated_constructs() {
+        assert!(!highlight("public class Demo { string name = \"A", LanguageId::CSharp).is_empty());
+        assert!(!highlight("<div class=\"app\"", LanguageId::Html).is_empty());
+        assert!(!highlight(".app { color: \"#fff", LanguageId::Css).is_empty());
     }
 }
