@@ -2,9 +2,9 @@
 
 ## Current mission: Aitext v0.1.0 formal release
 
-The active release plan is [docs/superpowers/plans/2026-08-20-aitext-v0.1.0-release.md](docs/superpowers/plans/2026-08-20-aitext-v0.1.0-release.md). User-approved decisions: destructive restart strategy B, unsigned installer strategy A, Paper Cut bilingual media, no desktop automation. Current phase: plan complete; execution approach pending.
+The active release plan is [docs/superpowers/plans/2026-08-20-aitext-v0.1.0-release.md](docs/superpowers/plans/2026-08-20-aitext-v0.1.0-release.md). User-approved decisions: destructive restart strategy B, unsigned installer strategy A, Paper Cut bilingual media, no desktop automation. Current phase: v0.1.0 published and verified; final handoff complete.
 
-Release phases: local packaging/docs/media → RC workflow proof → repository rename/main replacement/old release deletion → v0.1.0 tag and Release verification → final handoff.
+Release phases: local packaging/docs/media → RC workflow proof → repository rename/main replacement/old release deletion → v0.1.0 tag and Release verification → final handoff. All phases are complete.
 
 ## Goal
 

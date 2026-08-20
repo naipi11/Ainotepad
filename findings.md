@@ -16,3 +16,12 @@
 - README will use `README.md` (English) and `README.zh-CN.md` (Simplified Chinese), with explicit language links rather than JavaScript toggling so GitHub renders both reliably.
 - Paper Cut is the approved visual direction. Planned media: exact-language PNG hero variants and exact-language animated GIF demos with a green ghost-text reveal; no desktop automation or real API key is needed.
 - Typed translation keys provide compile-time completeness without runtime translation files or extra parsing.
+
+## 2026-08-20 — v0.1.0 publication evidence
+
+- RC workflow `32371624434` passed on the temporary branch before destructive repository changes; its hosted Windows installer and portable ZIP were downloaded and hash-checked without launching the installer.
+- Repository was renamed to `naipi11/Aitext`; description/topics were updated; old v0.x releases and tags were removed; `main` now points to release commit `ca4f7b4526cb97b33f295086af1a1a4bbaa4efcd`.
+- Formal tag workflow `32372786776` passed in 6m0s. GitHub Release `v0.1.0` is published and non-draft with installer, portable ZIP, and SHA256SUMS assets.
+- Final downloaded assets were verified locally. The installer is `NotSigned` by design; the portable archive contains only `aitext.exe`, `LICENSE`, `README.md`, and `README.zh-CN.md`. The installer was not run.
+- The initial broad old-release deletion loop stopped safely when it reached tag `v0.1.1`, which had no GitHub Release. Cleanup was corrected to delete only the two actual old Releases (`v0.2.5`, `v0.2.6`) and then delete all old tag refs exactly; verification showed only `v0.1.0` remains.
+- The first multi-input `ffprobe` invocation was invalid because `ffprobe` accepts one input per command. It was corrected to four individual probes; all PNG/GIF metadata checks passed.

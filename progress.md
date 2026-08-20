@@ -56,6 +56,14 @@
 - Final workspace suite: 167 tests passed, 0 failed. Release build succeeded with the same 4 existing dead-code warnings.
 - Per user instruction, no app or desktop automation was used; this build is handed off for manual visual testing.
 
+## 2026-08-20 — Aitext v0.1.0 formally published
+
+- Windows RC workflow `32371624434` passed before the repository restart; the hosted installer and portable archive were downloaded, checked, and not launched.
+- Public repository is now [naipi11/Aitext](https://github.com/naipi11/Aitext). Old Helix Copilot releases/tags were removed, `main` was replaced with the reviewed Aitext commit, and only `v0.1.0` remains.
+- Formal tag workflow `32372786776` passed all formatting/tests/release-build/package steps and published the non-draft [Aitext v0.1.0 Release](https://github.com/naipi11/Aitext/releases/tag/v0.1.0).
+- Final release assets were downloaded and verified against `SHA256SUMS.txt`; ZIP contents were inspected; `Get-AuthenticodeSignature` reported `NotSigned`; the installer was not run.
+- Temporary RC branch `codex/aitext-v0.1.0-rc` was deleted after final Release verification. No desktop automation was used.
+
 ## 2026-08-20 — Aitext v0.1.0 formal release planning
 
 - User requested Windows installer, repository rename to Aitext, formal GitHub Release, bilingual Quick Start README, and English/Chinese showcase PNG/GIF assets.
