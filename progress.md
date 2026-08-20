@@ -82,6 +82,14 @@
 - Renamed local packages/binary/assets to Ainotepad, added legacy Aitext config migration, refreshed current documentation, packaging, and branded media.
 - Local verification passed: 105 Ainotepad tests, 37 Ainotepad AI tests, 38 Ainotepad core tests, formatting, and Release build. No desktop application was launched.
 
+## 2026-08-21 — Ainotepad v0.1.0 formally published
+
+- RC workflow `32417179086` passed before the repository replacement; hosted Windows artifacts were checked without launching the installer.
+- Repository is now [naipi11/Ainotepad](https://github.com/naipi11/Ainotepad), with current README/media/package identity changed from Aitext to Ainotepad.
+- Published [Ainotepad v0.1.0](https://github.com/naipi11/Ainotepad/releases/tag/v0.1.0) with the unsigned installer, portable ZIP, and SHA256SUMS.
+- Final public downloads were SHA256-verified; ZIP contents and NotSigned status were checked; temporary RC branch/download directories were removed.
+- No desktop application or installer was launched or controlled.
+
 ## 2026-08-20 — Aitext v0.1.0 formal release planning
 
 - User requested Windows installer, repository rename to Aitext, formal GitHub Release, bilingual Quick Start README, and English/Chinese showcase PNG/GIF assets.

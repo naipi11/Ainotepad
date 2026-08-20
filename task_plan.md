@@ -2,9 +2,9 @@
 
 ## Current mission: Ainotepad v0.1.0 direct replacement
 
-The active release plan is [docs/superpowers/plans/2026-08-20-ainotepad-v0.1.0-replacement.md](docs/superpowers/plans/2026-08-20-ainotepad-v0.1.0-replacement.md). User-approved decisions: direct Aitext → Ainotepad replacement, numeric version remains v0.1.0, Markdown-default document types, unified mixed-script layout, unsigned installer strategy, Paper Cut bilingual media, and no desktop automation. Current phase: local implementation complete through packaging; hosted RC proof pending.
+The active release plan is [docs/superpowers/plans/2026-08-20-ainotepad-v0.1.0-replacement.md](docs/superpowers/plans/2026-08-20-ainotepad-v0.1.0-replacement.md). User-approved decisions: direct Aitext → Ainotepad replacement, numeric version remains v0.1.0, Markdown-default document types, unified mixed-script layout, unsigned installer strategy, Paper Cut bilingual media, and no desktop automation. Current phase: Ainotepad v0.1.0 published and verified; final handoff complete.
 
-Release phases: core language/highlighting → shared editor layout → document-type selector → Ainotepad package/config rename → docs/media/package → RC workflow proof → repository rename/main replacement/old Release replacement → final handoff.
+Release phases: core language/highlighting → shared editor layout → document-type selector → Ainotepad package/config rename → docs/media/package → RC workflow proof → repository rename/main replacement/old Release replacement → final handoff. All phases are complete.
 
 ## Goal
 

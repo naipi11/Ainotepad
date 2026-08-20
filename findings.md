@@ -35,3 +35,11 @@
 - Renamed the local Cargo packages and executable to Ainotepad/ainotepad.exe. Config migration targets LOCALAPPDATA/Ainotepad and reads legacy APPDATA or LOCALAPPDATA Aitext directories without deleting them.
 - Updated current README, product/design docs, Inno/workflows, release notes, and bilingual showcase media. Current media uses Ainotepad branding and 32/28-frame two-stage sentence/code reveal GIFs.
 - Local validation: workspace tests 105 app + 37 AI + 38 core passed; cargo fmt check passed; cargo build --release -p ainotepad passed; only the four pre-existing unused default-config helper warnings remain.
+
+## 2026-08-21 — Ainotepad v0.1.0 publication evidence
+
+- Hosted RC workflow `32417179086` passed on the temporary branch before public mutation. Its unsigned installer and portable ZIP were downloaded, SHA256-checked, ZIP-inspected, and not launched.
+- Public repository was renamed to `naipi11/Ainotepad`; description/topics were updated; old Aitext v0.1.0 Release/tag were removed; `main` now points to `928fee327a9548ae6404f6f9b3a5c3f2782cae74`.
+- Formal tag workflow `32418398305` passed in 6m18s and published non-draft/non-prerelease Ainotepad v0.1.0.
+- Final public assets match their SHA256SUMS: portable `c821d08467df469d6f275fe3f4ec68ec229cd651d2999b955a471f8e412c3cfe`; installer `21d7c05ca981e17e4e52848ed06a8c4b7140546f7a2090e8014b4a0eca3f2c6b`.
+- Final installer is unsigned by design; public ZIP contains `ainotepad.exe`, LICENSE, and bilingual README files. Temporary RC branch and local download directories were removed after verification.
