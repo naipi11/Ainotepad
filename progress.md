@@ -67,8 +67,9 @@
 ## 2026-08-20 — README showcase readability revision
 
 - Replaced both Paper Cut hero images with readable editor examples: a natural-language ghost continuation plus a Python `print("Hello, World!")` completion.
-- Updated both English and Simplified Chinese GIFs to use the same visible examples with a blinking caret, rather than abstract placeholder bars.
-- Verified PNG dimensions (1672×941), GIF dimensions (1200×675), six GIF frames at 5 fps, and clean `git diff --check`. No application or desktop automation was used.
+- Updated both English and Simplified Chinese GIFs to reveal the green ghost continuation character by character, rather than only blinking the caret.
+- Shortened the English showcase continuation so it remains fully inside the editor window, while retaining the visible `print("Hello, World!")` completion.
+- Verified PNG dimensions (1672×941), GIF dimensions (1200×675), 16/12 GIF frames at 8 fps, and clean `git diff --check`. No application or desktop automation was used.
 
 ## 2026-08-20 — Aitext v0.1.0 formal release planning
 
