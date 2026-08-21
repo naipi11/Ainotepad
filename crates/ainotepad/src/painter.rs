@@ -14,6 +14,23 @@ fn neutral_divider_color(gutter: Color32) -> Color32 {
     Color32::from_rgba_unmultiplied(gray, gray, gray, 110)
 }
 
+fn editor_font(config: &AppConfig, document_text: &str) -> FontId {
+    let selected_family = if crate::app::font_is_available(&config.font_family) {
+        egui::FontFamily::Name(config.font_family.clone().into())
+    } else {
+        egui::FontFamily::Monospace
+    };
+    let has_non_ascii = document_text
+        .chars()
+        .any(|character| !character.is_ascii() && !character.is_whitespace());
+    let family = if has_non_ascii && crate::app::font_is_available("YaHei") {
+        egui::FontFamily::Name("YaHei".into())
+    } else {
+        selected_family
+    };
+    FontId::new(config.font_size, family)
+}
+
 pub fn char_index_at(
     doc: &Document,
     layouts: &[EditorLineLayout],
@@ -38,12 +55,7 @@ pub fn paint_editor(
     preedit: Option<&str>,
 ) -> bool {
     let theme = colors_with_custom(config.theme, &config.custom_theme);
-    let family = if crate::app::font_is_available(&config.font_family) {
-        egui::FontFamily::Name(config.font_family.clone().into())
-    } else {
-        egui::FontFamily::Monospace
-    };
-    let font = FontId::new(config.font_size, family);
+    let font = editor_font(config, &doc.text());
     let line_count = doc.line_count().max(1);
     let tokens = highlight(&doc.text(), doc.language());
     let layouts = build_editor_line_layouts(ui, &font, doc, &tokens, config);
@@ -321,6 +333,7 @@ mod tests {
     #[test]
     fn mixed_script_text_is_painted_as_one_line_galley() {
         let context = egui::Context::default();
+        crate::app::install_fonts(&context);
         let mut input = egui::RawInput::default();
         input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, vec2(600.0, 180.0)));
         let mut document = Document::from_text("你好###abccABCDA你好###");
@@ -369,5 +382,15 @@ mod tests {
                 _ => None,
             });
         assert!((ghost_x.unwrap() - caret_x.unwrap()).abs() < 0.01);
+    }
+
+    #[test]
+    fn mixed_script_document_uses_cjk_primary_font() {
+        let mut config = AppConfig::default();
+        config.font_family = "Consolas".into();
+        let mixed = editor_font(&config, "你好ABC");
+        let ascii = editor_font(&config, "fn main() {}");
+        assert_eq!(mixed.family, egui::FontFamily::Name("YaHei".into()));
+        assert_eq!(ascii.family, egui::FontFamily::Name("Consolas".into()));
     }
 }

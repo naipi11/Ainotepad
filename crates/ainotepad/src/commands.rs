@@ -85,6 +85,7 @@ pub struct AinotepadApp {
     pub(crate) pending_profile_secret_deletions: Vec<String>,
     pub about_open: bool,
     pub shortcuts_open: bool,
+    pub close_prompt_open: bool,
     pub completion: CompletionUiState,
     pub api_key: Option<String>,
     pub profile_revision: u64,
@@ -113,6 +114,7 @@ impl AinotepadApp {
             pending_profile_secret_deletions: Vec::new(),
             about_open: false,
             shortcuts_open: false,
+            close_prompt_open: false,
             completion: CompletionUiState::default(),
             api_key: None,
             profile_revision: 0,
@@ -172,6 +174,51 @@ impl AinotepadApp {
         self.status
             .as_ref()
             .map(|message| message.render(self.locale()))
+    }
+
+    pub fn should_prompt_before_close(&self) -> bool {
+        self.workspace.documents().any(|doc| doc.is_dirty())
+    }
+
+    pub fn discard_all_documents(&mut self) {
+        let ids: Vec<u64> = self.workspace.documents().map(|doc| doc.id()).collect();
+        for id in ids {
+            if let Some(doc) = self.workspace.get_mut(id) {
+                doc.mark_clean();
+            }
+        }
+    }
+
+    pub fn save_all_documents(&mut self) -> bool {
+        let original = self.workspace.current_id();
+        let ids: Vec<u64> = self.workspace.documents().map(|doc| doc.id()).collect();
+        for id in ids {
+            if !self
+                .workspace
+                .get(id)
+                .map(|doc| doc.is_dirty())
+                .unwrap_or(false)
+            {
+                continue;
+            }
+            self.workspace.set_current(id);
+            self.save_file(false);
+            if self
+                .workspace
+                .get(id)
+                .map(|doc| doc.is_dirty())
+                .unwrap_or(true)
+            {
+                if let Some(original) = original {
+                    self.workspace.set_current(original);
+                }
+                return false;
+            }
+        }
+        if let Some(original) = original {
+            self.workspace.set_current(original);
+        }
+        true
     }
 
     pub fn reload_active_profile_key(&mut self) {

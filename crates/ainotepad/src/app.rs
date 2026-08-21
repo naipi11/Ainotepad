@@ -69,10 +69,23 @@ fn active_tab_rule(rect: egui::Rect) -> egui::Rect {
     )
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum CloseDecision {
+    Save,
+    Discard,
+    Cancel,
+}
+
 impl eframe::App for AinotepadApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let settings_was_open = self.settings_open;
         let locale = self.locale();
+        if ctx.input(|input| input.viewport().close_requested())
+            && (self.should_prompt_before_close() || self.close_prompt_open)
+        {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            self.close_prompt_open = true;
+        }
         crate::theme::apply_visuals(ctx, self.config.theme, &self.config.custom_theme);
         let shell = crate::theme::shell_colors(self.config.theme);
         let editor = crate::theme::colors_with_custom(self.config.theme, &self.config.custom_theme);
@@ -323,6 +336,50 @@ impl eframe::App for AinotepadApp {
                 }
             }
         }
+        if self.close_prompt_open {
+            let mut window_open = true;
+            let mut decision = None;
+            egui::Window::new(text(locale, TextKey::CloseUnsavedTitle))
+                .open(&mut window_open)
+                .collapsible(false)
+                .resizable(false)
+                .show(ctx, |ui| {
+                    ui.label(text(locale, TextKey::CloseUnsavedDetail));
+                    ui.add_space(8.0);
+                    ui.horizontal(|ui| {
+                        if ui.button(text(locale, TextKey::CloseSaveAll)).clicked() {
+                            decision = Some(CloseDecision::Save);
+                        }
+                        if ui.button(text(locale, TextKey::CloseDiscard)).clicked() {
+                            decision = Some(CloseDecision::Discard);
+                        }
+                        if ui.button(text(locale, TextKey::CloseCancel)).clicked() {
+                            decision = Some(CloseDecision::Cancel);
+                        }
+                    });
+                });
+            if !window_open && decision.is_none() {
+                decision = Some(CloseDecision::Cancel);
+            }
+            match decision {
+                Some(CloseDecision::Save) => {
+                    if self.save_all_documents() && !self.should_prompt_before_close() {
+                        self.close_prompt_open = false;
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                    }
+                }
+                Some(CloseDecision::Discard) => {
+                    self.discard_all_documents();
+                    self.close_prompt_open = false;
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                }
+                Some(CloseDecision::Cancel) => {
+                    self.close_prompt_open = false;
+                    ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+                }
+                None => {}
+            }
+        }
         if self.about_open {
             egui::Window::new(text(locale, TextKey::HelpAbout))
                 .open(&mut self.about_open)
@@ -514,6 +571,21 @@ mod tests {
             settings_window_position(viewport, size),
             egui::pos2(120.0, 48.0)
         );
+    }
+
+    #[test]
+    fn dirty_documents_require_close_prompt() {
+        let mut app = AinotepadApp::new_for_test();
+        app.workspace.new_untitled();
+        app.workspace.current_mut().unwrap().insert("未保存内容");
+        assert!(app.should_prompt_before_close());
+    }
+
+    #[test]
+    fn clean_documents_can_close_without_prompt() {
+        let mut app = AinotepadApp::new_for_test();
+        app.workspace.new_untitled();
+        assert!(!app.should_prompt_before_close());
     }
 
     #[test]
