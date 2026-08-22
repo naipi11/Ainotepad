@@ -35,7 +35,23 @@ pub fn repair_unclosed_code_completion(prefix: &str, text: &str) -> String {
 
 fn complete_unclosed_delimiters(prefix: &str, text: &str) -> String {
     let text = text.trim_end_matches(['\r', '\n']);
-    if !looks_like_code(prefix) || text.contains('\n') {
+    let (first_line, rest) = text.split_once('\n').unwrap_or((text, ""));
+    if first_line.trim().is_empty() && !rest.is_empty() {
+        return text.to_string();
+    }
+    let repaired = complete_unclosed_single_line(prefix, first_line);
+    if repaired == first_line || rest.is_empty() {
+        return if rest.is_empty() {
+            repaired
+        } else {
+            text.to_string()
+        };
+    }
+    format!("{repaired}\n{rest}")
+}
+
+fn complete_unclosed_single_line(prefix: &str, text: &str) -> String {
+    if !looks_like_code(prefix) {
         return text.to_string();
     }
 
@@ -446,6 +462,10 @@ mod tests {
         assert_eq!(
             shape_suggestion("\"Hello, World!\n", "print(").as_deref(),
             Some("\"Hello, World!\")")
+        );
+        assert_eq!(
+            shape_suggestion("\"Hello, World!\nprint(\"next", "print(").as_deref(),
+            Some("\"Hello, World!\")\nprint(\"next")
         );
     }
 }
