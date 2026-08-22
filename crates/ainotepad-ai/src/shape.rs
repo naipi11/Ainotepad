@@ -30,6 +30,15 @@ pub fn shape_suggestion(raw: &str, prefix: &str) -> Option<String> {
 }
 
 pub fn repair_unclosed_code_completion(prefix: &str, text: &str) -> String {
+    let current_line = prefix.lines().last().unwrap_or(prefix).trim_end();
+    let text = text.trim_end_matches(['\r', '\n']);
+    if current_line.ends_with('(')
+        && matches!(text.chars().next(), Some('\'' | '"'))
+        && !text.ends_with(')')
+    {
+        let quote = text.chars().next().unwrap();
+        return format!("{text}{quote})");
+    }
     complete_unclosed_delimiters(prefix, text)
 }
 
@@ -466,6 +475,10 @@ mod tests {
         assert_eq!(
             shape_suggestion("\"Hello, World!\nprint(\"next", "print(").as_deref(),
             Some("\"Hello, World!\")\nprint(\"next")
+        );
+        assert_eq!(
+            repair_unclosed_code_completion("# previous\nprint(", "\"Hello, World!"),
+            "\"Hello, World!\")"
         );
     }
 }
