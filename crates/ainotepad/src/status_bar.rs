@@ -12,14 +12,6 @@ pub fn draw_status_bar(ui: &mut Ui, app: &mut AinotepadApp) {
     ui.horizontal(|ui| {
         let mut first = true;
         for item in items {
-            if item == StatusItem::Language && app.workspace.current().is_some() {
-                if !first {
-                    ui.separator();
-                }
-                draw_language_selector(ui, app);
-                first = false;
-                continue;
-            }
             if let Some(status) = status_text(app, item) {
                 if !first {
                     ui.separator();
@@ -37,6 +29,18 @@ pub fn draw_status_bar(ui: &mut Ui, app: &mut AinotepadApp) {
                 first = false;
             }
         }
+    });
+}
+
+pub fn draw_document_toolbar(ui: &mut Ui, app: &mut AinotepadApp) {
+    let shell = shell_colors(app.config.theme);
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 6.0;
+        ui.label(
+            egui::RichText::new(text(app.locale(), TextKey::DocumentTypeLabel))
+                .color(shell.muted_text),
+        );
+        draw_language_selector(ui, app);
     });
 }
 
@@ -70,6 +74,7 @@ pub fn draw_language_selector(ui: &mut Ui, app: &mut AinotepadApp) {
     let locale = app.locale();
     let mut selected = current;
     egui::ComboBox::from_id_salt("document-language")
+        .width(160.0)
         .selected_text(language_label(locale, current))
         .show_ui(ui, |ui| {
             ui.weak(text(locale, TextKey::DocumentTypeText));
@@ -153,7 +158,7 @@ fn encoding_name(encoding: Encoding) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{language_label, status_text};
+    use super::{draw_document_toolbar, language_label, status_text};
     use crate::commands::AinotepadApp;
     use crate::config::{ApiProfile, StatusItem};
     use crate::i18n::{Locale, UiLanguage};
@@ -168,6 +173,49 @@ mod tests {
             "纯文本"
         );
         assert_eq!(language_label(Locale::En, LanguageId::CSharp), "C#");
+    }
+
+    #[test]
+    fn document_toolbar_exposes_markdown_as_the_default_file_type() {
+        let mut app = AinotepadApp::new_for_test();
+        app.workspace.new_untitled();
+        let context = egui::Context::default();
+        let mut input = egui::RawInput::default();
+        input.screen_rect = Some(egui::Rect::from_min_size(
+            egui::Pos2::ZERO,
+            egui::vec2(500.0, 80.0),
+        ));
+        let output = context.run(input, |context| {
+            egui::CentralPanel::default().show(context, |ui| {
+                draw_document_toolbar(ui, &mut app);
+            });
+        });
+        let labels: Vec<_> = output
+            .shapes
+            .iter()
+            .filter_map(|clipped| match &clipped.shape {
+                egui::Shape::Text(shape) => Some(shape.galley.job.text.as_str()),
+                _ => None,
+            })
+            .collect();
+        assert!(labels.contains(&"File type"));
+        assert!(labels.contains(&"Markdown"));
+    }
+
+    #[test]
+    fn language_options_cover_requested_mainstream_formats() {
+        for language in [
+            LanguageId::PlainText,
+            LanguageId::Markdown,
+            LanguageId::C,
+            LanguageId::Cpp,
+            LanguageId::Python,
+            LanguageId::CSharp,
+            LanguageId::Html,
+            LanguageId::Css,
+        ] {
+            assert!(LanguageId::ALL.contains(&language));
+        }
     }
 
     #[test]

@@ -35,6 +35,7 @@ pub fn draw_editor(ui: &mut Ui, app: &mut AinotepadApp) {
 }
 
 fn draw_editor_context_menu(ui: &mut Ui, app: &mut AinotepadApp) {
+    ui.set_min_width(240.0);
     let (has_selection, readonly, can_undo, can_redo) = app
         .workspace
         .current()
@@ -419,5 +420,17 @@ mod tests {
                 egui::Shape::Text(shape) if shape.galley.job.text == "Copy"
             )
         }));
+        let widest_menu_rect = output
+            .shapes
+            .iter()
+            .filter_map(|clipped| match &clipped.shape {
+                egui::Shape::Rect(shape) if shape.rect.left() > 20.0 => Some(shape.rect.width()),
+                _ => None,
+            })
+            .fold(0.0, f32::max);
+        assert!(
+            widest_menu_rect >= 240.0,
+            "context menu width was {widest_menu_rect}"
+        );
     }
 }
