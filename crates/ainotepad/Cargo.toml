@@ -10,7 +10,7 @@ ainotepad-ai = { path = "../ainotepad-ai" }
 serde = { version = "1", features = ["derive"] }
 toml = "0.8"
 eframe = { version = "0.31", default-features = true }
-egui = "0.31"
+egui = "0.36"
 arboard = "3.6"
 rfd = "0.15"
 image = { version = "0.25", default-features = false, features = ["png"] }
