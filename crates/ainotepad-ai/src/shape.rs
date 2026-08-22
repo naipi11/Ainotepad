@@ -20,11 +20,82 @@ pub fn shape_suggestion(raw: &str, prefix: &str) -> Option<String> {
     text = clip_repeats(prefix, &text);
     text = clip_to_mode(prefix, &text);
     text = collapse_question_restatement(prefix, &text);
+    text = complete_unclosed_delimiters(prefix, &text);
     let text = text.trim_end().to_string();
     if text.is_empty() || looks_like_meta_completion(&text) || looks_like_blog_opener(&text) {
         None
     } else {
         Some(text)
+    }
+}
+
+fn complete_unclosed_delimiters(prefix: &str, text: &str) -> String {
+    if !looks_like_code(prefix) || text.contains('\n') {
+        return text.to_string();
+    }
+
+    let combined = format!("{prefix}{text}");
+    let mut stack = Vec::new();
+    let mut quote = None;
+    let mut escaped = false;
+    let mut comment = false;
+
+    for ch in combined.chars() {
+        if comment {
+            continue;
+        }
+        if let Some(open_quote) = quote {
+            if escaped {
+                escaped = false;
+            } else if ch == '\\' {
+                escaped = true;
+            } else if ch == open_quote {
+                quote = None;
+            }
+            continue;
+        }
+        match ch {
+            '#' => comment = true,
+            '\'' | '"' => quote = Some(ch),
+            '(' | '[' | '{' => stack.push(ch),
+            ')' | ']' | '}' => {
+                if stack.last().copied() == Some(matching_open(ch)) {
+                    stack.pop();
+                }
+            }
+            _ => {}
+        }
+    }
+
+    let mut suffix = String::new();
+    if let Some(open_quote) = quote {
+        suffix.push(open_quote);
+    }
+    while let Some(open) = stack.pop() {
+        suffix.push(matching_close(open));
+    }
+    if suffix.is_empty() {
+        text.to_string()
+    } else {
+        format!("{text}{suffix}")
+    }
+}
+
+fn matching_open(close: char) -> char {
+    match close {
+        ')' => '(',
+        ']' => '[',
+        '}' => '{',
+        _ => close,
+    }
+}
+
+fn matching_close(open: char) -> char {
+    match open {
+        '(' => ')',
+        '[' => ']',
+        '{' => '}',
+        _ => open,
     }
 }
 
@@ -355,5 +426,17 @@ mod tests {
         let shaped = shape_suggestion("hello a", "printf(\"hello").unwrap();
         assert_ne!(shaped, "hello a");
         assert!(!shaped.starts_with("hello"));
+    }
+
+    #[test]
+    fn completes_an_unclosed_python_string_call() {
+        assert_eq!(
+            shape_suggestion("print(\"Hello, World!", "print(\"Hello, World!").as_deref(),
+            Some("\")")
+        );
+        assert_eq!(
+            shape_suggestion("\"This is a test", "print(").as_deref(),
+            Some("\"This is a test\")")
+        );
     }
 }
