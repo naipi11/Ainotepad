@@ -12,7 +12,7 @@ toml = "0.8"
 eframe = { version = "0.31", default-features = true }
 egui = "0.31"
 arboard = "3.6"
-rfd = "0.15"
+rfd = "0.17"
 image = { version = "0.25", default-features = false, features = ["png"] }
 
 [target.'cfg(windows)'.dependencies]
