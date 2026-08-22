@@ -1,8 +1,39 @@
-# Ainotepad
+<p align="center">
+  <img src="crates/ainotepad/assets/ainotepad-icon.png" alt="Ainotepad 图标" width="128">
+</p>
 
-[English](README.md) · [简体中文](README.zh-CN.md)
+<h1 align="center">Ainotepad</h1>
 
-[![CI](https://github.com/naipi11/Ainotepad/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/naipi11/Ainotepad/actions/workflows/ci.yml) [![许可证：MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![平台：Windows](https://img.shields.io/badge/platform-Windows-0078D4.svg)](https://github.com/naipi11/Ainotepad/releases)
+<p align="center">
+  <strong>光标处的幽灵字补全。</strong><br>
+  一款轻量级 Windows 原生文本与代码编辑器，适合写作、记录和编程。
+</p>
+
+<p align="center">
+  <a href="README.md">English</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/naipi11/Ainotepad/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/naipi11/Ainotepad/ci.yml?branch=main&label=CI&logo=github"></a>
+  <a href="https://github.com/naipi11/Ainotepad/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/naipi11/Ainotepad?display_name=tag&sort=semver&label=release"></a>
+  <a href="https://github.com/naipi11/Ainotepad/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/naipi11/Ainotepad?style=flat&label=stars&logo=github"></a>
+  <a href="https://github.com/naipi11/Ainotepad/releases"><img alt="下载量" src="https://img.shields.io/github/downloads/naipi11/Ainotepad/total?label=downloads"></a>
+  <a href="LICENSE"><img alt="许可证：MIT" src="https://img.shields.io/github/license/naipi11/Ainotepad?label=license"></a>
+</p>
+
+<p align="center">
+  <img alt="Rust" src="https://img.shields.io/badge/Rust-native-orange?logo=rust&logoColor=white">
+  <img alt="egui" src="https://img.shields.io/badge/UI-egui-2f80ed">
+  <img alt="Windows 原生" src="https://img.shields.io/badge/Windows-native-0078D4?logo=windows&logoColor=white">
+  <img alt="Markdown" src="https://img.shields.io/badge/Markdown-default-6f42c1">
+  <img alt="AI 幽灵字" src="https://img.shields.io/badge/AI-ghost%20text-43a047">
+</p>
+
+<p align="center">
+  <a href="https://github.com/naipi11/Ainotepad/releases/latest"><strong>下载 Windows 版本</strong></a>
+  · <a href="#quick-start--快速开始">快速开始</a>
+  · <a href="#star-history--star-history">Star History</a>
+</p>
 
 ![Ainotepad Paper Cut](docs/media/hero-zh-CN.png)
 
@@ -43,6 +74,14 @@ v0.1.0 安装包未进行代码签名，Windows SmartScreen 可能显示“未�
 - 新建文档默认使用 Markdown；底部文件类型选项框支持纯文本、C/C++、C#、Python、Rust、JavaScript/TypeScript、HTML、CSS、JSON、TOML、PowerShell、Batch 和 INI。
 - 按当前文件类型提供语法高亮，并支持多标签、查找替换、撤销重做和可配置状态栏。
 - 原生 Windows 标题栏和便携式单进程编辑器。
+
+## Star History / Star History
+
+<p align="center">
+  <a href="https://star-history.com/#naipi11/Ainotepad&Date">
+    <img src="https://api.star-history.com/svg?repos=naipi11/Ainotepad&type=Date" alt="Star History Chart">
+  </a>
+</p>
 
 ## 从源码构建
 

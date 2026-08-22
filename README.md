@@ -1,8 +1,39 @@
-# Ainotepad
+<p align="center">
+  <img src="crates/ainotepad/assets/ainotepad-icon.png" alt="Ainotepad icon" width="128">
+</p>
 
-[English](README.md) · [简体中文](README.zh-CN.md)
+<h1 align="center">Ainotepad</h1>
 
-[![CI](https://github.com/naipi11/Ainotepad/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/naipi11/Ainotepad/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D4.svg)](https://github.com/naipi11/Ainotepad/releases)
+<p align="center">
+  <strong>Ghost text at the caret.</strong><br>
+  A lightweight Windows-native text and code editor for writing, notes, and code.
+</p>
+
+<p align="center">
+  <a href="README.zh-CN.md">简体中文</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/naipi11/Ainotepad/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/naipi11/Ainotepad/ci.yml?branch=main&label=CI&logo=github"></a>
+  <a href="https://github.com/naipi11/Ainotepad/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/naipi11/Ainotepad?display_name=tag&sort=semver&label=release"></a>
+  <a href="https://github.com/naipi11/Ainotepad/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/naipi11/Ainotepad?style=flat&label=stars&logo=github"></a>
+  <a href="https://github.com/naipi11/Ainotepad/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/naipi11/Ainotepad/total?label=downloads"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/naipi11/Ainotepad?label=license"></a>
+</p>
+
+<p align="center">
+  <img alt="Rust" src="https://img.shields.io/badge/Rust-native-orange?logo=rust&logoColor=white">
+  <img alt="egui" src="https://img.shields.io/badge/UI-egui-2f80ed">
+  <img alt="Windows native" src="https://img.shields.io/badge/Windows-native-0078D4?logo=windows&logoColor=white">
+  <img alt="Markdown" src="https://img.shields.io/badge/Markdown-default-6f42c1">
+  <img alt="AI ghost text" src="https://img.shields.io/badge/AI-ghost%20text-43a047">
+</p>
+
+<p align="center">
+  <a href="https://github.com/naipi11/Ainotepad/releases/latest"><strong>Download for Windows</strong></a>
+  · <a href="#quick-start">Quick Start</a>
+  · <a href="#star-history">Star History</a>
+</p>
 
 ![Ainotepad Paper Cut](docs/media/hero-en.png)
 
@@ -43,6 +74,14 @@ Type in a document and pause briefly. A green continuation appears at the caret 
 - Markdown is the default for new documents; the status bar type selector supports Plain Text, C/C++, C#, Python, Rust, JavaScript/TypeScript, HTML, CSS, JSON, TOML, PowerShell, Batch, and INI.
 - Syntax highlighting for the selected document type, tabs, find/replace, undo/redo, and configurable status information.
 - Native Windows title controls and a portable single-process editor.
+
+## Star History
+
+<p align="center">
+  <a href="https://star-history.com/#naipi11/Ainotepad&Date">
+    <img src="https://api.star-history.com/svg?repos=naipi11/Ainotepad&type=Date" alt="Star History Chart">
+  </a>
+</p>
 
 ## Build from source
 
