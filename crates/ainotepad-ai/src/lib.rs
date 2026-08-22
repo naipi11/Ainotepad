@@ -52,7 +52,7 @@ pub use openai::{
     completion_request_plan, endpoint_url, fetch_models, parse_model_ids, test_connection,
     AuthScheme, CompletionProtocol, OpenAiConfig, OpenAiTransport, ProfileRequestConfig,
 };
-pub use shape::shape_suggestion;
+pub use shape::{repair_unclosed_code_completion, shape_suggestion};
 pub use snapshot::{take_snapshot, CompletionSnapshot};
 pub use state::{CompletionState, GhostSuggestion};
 pub use transport::{CancelFlag, CompletionError, NullTransport, Transport};

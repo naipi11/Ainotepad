@@ -29,6 +29,10 @@ pub fn shape_suggestion(raw: &str, prefix: &str) -> Option<String> {
     }
 }
 
+pub fn repair_unclosed_code_completion(prefix: &str, text: &str) -> String {
+    complete_unclosed_delimiters(prefix, text)
+}
+
 fn complete_unclosed_delimiters(prefix: &str, text: &str) -> String {
     let text = text.trim_end_matches(['\r', '\n']);
     if !looks_like_code(prefix) || text.contains('\n') {

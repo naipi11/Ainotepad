@@ -287,6 +287,27 @@ mod tests {
     }
 
     #[test]
+    fn engine_keeps_python_call_closer_in_the_visible_suggestion() {
+        let mut engine = CompletionEngine::new(FakeTransport::ok("unused"));
+        engine.configured = true;
+        let mut snapshot = sample_snapshot();
+        snapshot.prefix = "print(".into();
+        snapshot.language = "python".into();
+        engine.on_change(0, snapshot, true, false, false, false);
+        let generation = match engine.on_tick(60) {
+            EngineEvent::StartRequest { snapshot } => snapshot.generation,
+            _ => panic!("expected a completion request"),
+        };
+        engine.on_result(generation, Ok("\"Hello, World!\n".into()));
+        assert_eq!(
+            engine
+                .suggestion()
+                .map(|suggestion| suggestion.text.as_str()),
+            Some("\"Hello, World!\")")
+        );
+    }
+
+    #[test]
     fn stale_generation_is_ignored() {
         let mut engine = CompletionEngine::new(FakeTransport::ok("xyz"));
         engine.configured = true;
