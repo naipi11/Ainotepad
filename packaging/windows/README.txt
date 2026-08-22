@@ -6,8 +6,9 @@ with Inno Setup on a GitHub-hosted Windows runner.
 Expected input:
   ..\..\target\release\ainotepad.exe
 
-Expected output:
-  ..\..\dist\Ainotepad-Setup-0.1.0-win-x64.exe
+The release workflow passes the version from the pushed `vX.Y.Z` tag to
+Inno Setup and writes:
+  ..\..\dist\Ainotepad-Setup-X.Y.Z-win-x64.exe
 
-The installer is intentionally unsigned for v0.1.0. Windows SmartScreen may
-show an unknown-publisher warning.
+The installer is intentionally unsigned. Windows SmartScreen may show an
+unknown-publisher warning.

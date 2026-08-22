@@ -1,5 +1,7 @@
 #define MyAppName "Ainotepad"
+#ifndef MyAppVersion
 #define MyAppVersion "0.1.0"
+#endif
 #define MyAppPublisher "naipi11"
 #define MyAppExeName "ainotepad.exe"
 
@@ -18,7 +20,7 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\..\dist
-OutputBaseFilename=Ainotepad-Setup-0.1.0-win-x64
+OutputBaseFilename=Ainotepad-Setup-{#MyAppVersion}-win-x64
 SetupIconFile=..\..\crates\ainotepad\assets\ainotepad.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2
