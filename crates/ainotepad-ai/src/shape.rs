@@ -438,5 +438,9 @@ mod tests {
             shape_suggestion("\"This is a test", "print(").as_deref(),
             Some("\"This is a test\")")
         );
+        assert_eq!(
+            shape_suggestion("\"Hello, World!\n", "print(").as_deref(),
+            Some("\"Hello, World!\")")
+        );
     }
 }
