@@ -24,4 +24,4 @@ FileDescription = "Ainotepad"
 ProductName = "Ainotepad"
 
 [build-dependencies]
-embed-resource = "2"
+embed-resource = "3"
