@@ -388,6 +388,29 @@ mod tests {
     }
 
     #[test]
+    fn python_language_change_keeps_completion_requests_active() {
+        let mut app = AinotepadApp::new_for_test();
+        app.dispatch(Command::NewTab);
+        let mut profile =
+            crate::config::ApiProfile::new("DeepSeek", ainotepad_ai::ProviderKind::DeepSeek);
+        profile.base_url = "https://api.deepseek.com/v1".into();
+        profile.remember_model("deepseek-v4-flash");
+        app.config.add_profile(profile);
+        app.api_key = Some("sk-test".into());
+        app.handle_text_input("print(\"Hello\")");
+        app.set_document_language(ainotepad_core::LanguageId::Python);
+        app.handle_text_input("\nprint(\"My name is ");
+        app.poll_completion(10_000);
+
+        match app.last_engine_event.as_ref() {
+            Some(ainotepad_ai::EngineEvent::StartRequest { snapshot }) => {
+                assert_eq!(snapshot.language, "python");
+            }
+            _ => panic!("expected a Python completion request"),
+        }
+    }
+
+    #[test]
     fn stale_worker_result_cannot_apply_after_profile_revision_changes() {
         let mut app = AinotepadApp::new_for_test();
         app.dispatch(Command::NewTab);

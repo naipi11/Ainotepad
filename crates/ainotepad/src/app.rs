@@ -422,7 +422,8 @@ impl AinotepadApp {
     }
 
     pub(crate) fn background_work_needs_repaint(&self) -> bool {
-        self.completion.inflight.is_some()
+        self.completion.engine.has_pending()
+            || self.completion.inflight.is_some()
             || matches!(
                 self.completion.engine.state(),
                 ainotepad_ai::CompletionState::Requesting
@@ -628,6 +629,20 @@ mod tests {
         let mut app = AinotepadApp::new_for_test();
         let (_sender, receiver) = std::sync::mpsc::channel::<ProfileWorkerResult>();
         app.profile_worker_inboxes.push(receiver);
+
+        assert!(app.background_work_needs_repaint());
+    }
+
+    #[test]
+    fn background_work_needs_repaint_while_completion_is_debouncing() {
+        let mut app = AinotepadApp::new_for_test();
+        app.workspace.new_untitled();
+        let mut profile = ApiProfile::new("DeepSeek", ProviderKind::DeepSeek);
+        profile.base_url = "https://api.deepseek.com/v1".into();
+        profile.remember_model("deepseek-v4-flash");
+        app.config.add_profile(profile);
+        app.api_key = Some("sk-test".into());
+        app.handle_text_input("print(");
 
         assert!(app.background_work_needs_repaint());
     }

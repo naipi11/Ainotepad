@@ -63,6 +63,10 @@ impl<T: Transport> CompletionEngine<T> {
         self.generation
     }
 
+    pub fn has_pending(&self) -> bool {
+        self.pending.is_some()
+    }
+
     pub fn last_error(&self) -> Option<&str> {
         self.last_error.as_deref()
     }
