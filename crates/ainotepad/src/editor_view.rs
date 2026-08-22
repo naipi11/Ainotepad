@@ -383,6 +383,34 @@ mod tests {
     }
 
     #[test]
+    fn editor_display_repairs_a_call_opener_inside_the_ghost() {
+        let mut app = AinotepadApp::new_for_test();
+        app.config.font_family = "__aitext_test_missing_font__".into();
+        app.workspace.new_untitled();
+        app.workspace.current_mut().unwrap().insert("print");
+        app.force_ghost("(\"Hello, World!");
+
+        let context = egui::Context::default();
+        let mut input = egui::RawInput::default();
+        input.screen_rect = Some(egui::Rect::from_min_size(
+            egui::Pos2::ZERO,
+            egui::vec2(500.0, 220.0),
+        ));
+        let output = context.run(input, |context| {
+            egui::CentralPanel::default()
+                .frame(egui::Frame::NONE.inner_margin(egui::Margin::ZERO))
+                .show(context, |ui| draw_editor(ui, &mut app));
+        });
+
+        assert!(output.shapes.iter().any(|clipped| {
+            matches!(
+                &clipped.shape,
+                egui::Shape::Text(shape) if shape.galley.job.text == "(\"Hello, World!\")"
+            )
+        }));
+    }
+
+    #[test]
     fn right_click_opens_the_editor_context_menu() {
         let mut app = AinotepadApp::new_for_test();
         app.config.font_family = "__aitext_test_missing_font__".into();

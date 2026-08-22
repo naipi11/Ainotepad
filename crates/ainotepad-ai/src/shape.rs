@@ -30,6 +30,21 @@ pub fn shape_suggestion(raw: &str, prefix: &str) -> Option<String> {
 }
 
 pub fn repair_unclosed_code_completion(prefix: &str, text: &str) -> String {
+    let trimmed = text.trim_start();
+    if trimmed.starts_with('(') {
+        let mut chars = trimmed.chars();
+        let _ = chars.next();
+        if let Some(quote @ ('\'' | '"')) = chars.next() {
+            if !trimmed.ends_with(')') {
+                let mut repaired = text.to_string();
+                if !trimmed.ends_with(quote) {
+                    repaired.push(quote);
+                }
+                repaired.push(')');
+                return repaired;
+            }
+        }
+    }
     let current_line = prefix.lines().last().unwrap_or(prefix).trim_end();
     let text = text.trim_end_matches(['\r', '\n']);
     if current_line.ends_with('(')
@@ -479,6 +494,10 @@ mod tests {
         assert_eq!(
             repair_unclosed_code_completion("# previous\nprint(", "\"Hello, World!"),
             "\"Hello, World!\")"
+        );
+        assert_eq!(
+            repair_unclosed_code_completion("print", "(\"Hello, World!"),
+            "(\"Hello, World!\")"
         );
     }
 }
