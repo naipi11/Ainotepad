@@ -173,13 +173,16 @@ impl eframe::App for AinotepadApp {
                             self.dispatch(Command::Redo);
                         }
                         if ui.button(text(locale, TextKey::EditCut)).clicked() {
-                            self.dispatch(Command::Cut);
+                            self.cut_selection_to_system(ui.ctx());
                         }
                         if ui.button(text(locale, TextKey::EditCopy)).clicked() {
-                            self.dispatch(Command::Copy);
+                            self.copy_selection_to_system(ui.ctx());
                         }
                         if ui.button(text(locale, TextKey::EditPaste)).clicked() {
-                            self.dispatch(Command::Paste);
+                            self.paste_from_system();
+                        }
+                        if ui.button(text(locale, TextKey::EditDelete)).clicked() {
+                            self.dispatch(Command::Delete);
                         }
                         if ui.button(text(locale, TextKey::EditSelectAll)).clicked() {
                             self.dispatch(Command::SelectAll);

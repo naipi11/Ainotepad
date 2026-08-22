@@ -29,6 +29,7 @@ pub enum Command {
     Cut,
     Copy,
     Paste,
+    Delete,
     SelectAll,
     Indent,
     Unindent,
@@ -327,25 +328,17 @@ impl AinotepadApp {
                 }
             }
             Command::Cut => {
-                if let Some(doc) = self.workspace.current_mut() {
-                    self.clipboard = doc.selected_text();
-                    if !self.clipboard.is_empty() {
-                        doc.insert("");
-                    }
-                }
-                self.invalidate_and_queue();
+                self.cut_selection();
             }
             Command::Copy => {
-                if let Some(doc) = self.workspace.current() {
-                    self.clipboard = doc.selected_text();
-                }
+                self.copy_selection();
             }
             Command::Paste => {
                 let text = self.clipboard.clone();
-                if let Some(doc) = self.workspace.current_mut() {
-                    doc.insert(&text);
-                }
-                self.invalidate_and_queue();
+                self.paste_text(&text);
+            }
+            Command::Delete => {
+                self.delete_forward();
             }
             Command::Indent => {
                 if let Some(doc) = self.workspace.current_mut() {

@@ -135,6 +135,7 @@ version = "0.1.0"
 dependencies = [
  "ainotepad-ai",
  "ainotepad-core",
+ "arboard",
  "eframe",
  "egui",
  "embed-resource",

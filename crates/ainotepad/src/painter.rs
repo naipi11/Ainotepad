@@ -9,6 +9,11 @@ const EDITOR_GUTTER_WIDTH: f32 = 34.0;
 const EDITOR_TEXT_INSET: f32 = 4.0;
 const LINE_NUMBER_INSET: f32 = 6.0;
 
+pub struct EditorPaintOutput {
+    pub response: egui::Response,
+    pub caret_changed: bool,
+}
+
 fn neutral_divider_color(gutter: Color32) -> Color32 {
     let gray = ((gutter.r() as u16 + gutter.g() as u16 + gutter.b() as u16) / 3) as u8;
     Color32::from_rgba_unmultiplied(gray, gray, gray, 110)
@@ -53,7 +58,7 @@ pub fn paint_editor(
     config: &AppConfig,
     ghost: Option<&str>,
     preedit: Option<&str>,
-) -> bool {
+) -> EditorPaintOutput {
     let theme = colors_with_custom(config.theme, &config.custom_theme);
     let font = editor_font(config, &doc.text());
     let line_count = doc.line_count().max(1);
@@ -69,6 +74,9 @@ pub fn paint_editor(
     let (rect, response) = ui.allocate_exact_size(desired, Sense::click_and_drag());
     if !ui.ctx().memory(|m| m.focused().is_some()) || response.clicked() {
         response.request_focus();
+    }
+    if response.hovered() {
+        ui.ctx().set_cursor_icon(egui::CursorIcon::Text);
     }
 
     let painter = ui.painter_at(rect);
@@ -193,7 +201,10 @@ pub fn paint_editor(
         });
         output.mutable_text_under_cursor = true;
     });
-    caret_changed
+    EditorPaintOutput {
+        response,
+        caret_changed,
+    }
 }
 
 fn build_editor_line_layouts(
@@ -392,5 +403,38 @@ mod tests {
         let ascii = editor_font(&config, "fn main() {}");
         assert_eq!(mixed.family, egui::FontFamily::Name("YaHei".into()));
         assert_eq!(ascii.family, egui::FontFamily::Name("Consolas".into()));
+    }
+
+    #[test]
+    fn editor_hover_uses_a_text_cursor() {
+        let context = egui::Context::default();
+        let mut input = egui::RawInput::default();
+        input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, vec2(300.0, 160.0)));
+        let mut document = Document::new();
+        let mut config = AppConfig::default();
+        config.font_family = "__aitext_test_missing_font__".into();
+
+        let _ = context.run(input, |context| {
+            egui::CentralPanel::default()
+                .frame(egui::Frame::NONE.inner_margin(egui::Margin::ZERO))
+                .show(context, |ui| {
+                    paint_editor(ui, &mut document, &config, None, None);
+                });
+        });
+
+        let mut hovered_input = egui::RawInput::default();
+        hovered_input.screen_rect = Some(Rect::from_min_size(Pos2::ZERO, vec2(300.0, 160.0)));
+        hovered_input
+            .events
+            .push(egui::Event::PointerMoved(pos2(80.0, 20.0)));
+        let output = context.run(hovered_input, |context| {
+            egui::CentralPanel::default()
+                .frame(egui::Frame::NONE.inner_margin(egui::Margin::ZERO))
+                .show(context, |ui| {
+                    paint_editor(ui, &mut document, &config, None, None);
+                });
+        });
+
+        assert_eq!(output.platform_output.cursor_icon, egui::CursorIcon::Text);
     }
 }

@@ -42,6 +42,70 @@ impl Default for CompletionUiState {
 }
 
 impl AinotepadApp {
+    pub fn copy_selection(&mut self) -> String {
+        self.clipboard = self
+            .workspace
+            .current()
+            .map(|doc| doc.selected_text())
+            .unwrap_or_default();
+        self.clipboard.clone()
+    }
+
+    pub fn cut_selection(&mut self) -> String {
+        let selected = self
+            .workspace
+            .current()
+            .filter(|doc| !doc.is_readonly())
+            .map(|doc| doc.selected_text())
+            .unwrap_or_default();
+        if selected.is_empty() {
+            return String::new();
+        }
+        self.clipboard = selected.clone();
+        if let Some(doc) = self.workspace.current_mut() {
+            doc.insert("");
+        }
+        self.invalidate_and_queue();
+        selected
+    }
+
+    pub fn copy_selection_to_system(&mut self, context: &egui::Context) {
+        let text = self.copy_selection();
+        if !text.is_empty() {
+            context.copy_text(text);
+        }
+    }
+
+    pub fn cut_selection_to_system(&mut self, context: &egui::Context) {
+        let text = self.cut_selection();
+        if !text.is_empty() {
+            context.copy_text(text);
+        }
+    }
+
+    pub fn paste_text(&mut self, text: &str) {
+        if text.is_empty() {
+            return;
+        }
+        self.clipboard = text.to_string();
+        if let Some(doc) = self.workspace.current_mut() {
+            if !doc.is_readonly() {
+                doc.insert(text);
+            }
+        }
+        self.invalidate_and_queue();
+    }
+
+    pub fn paste_from_system(&mut self) {
+        let Ok(mut clipboard) = arboard::Clipboard::new() else {
+            return;
+        };
+        let Ok(text) = clipboard.get_text() else {
+            return;
+        };
+        self.paste_text(&text.replace("\r\n", "\n"));
+    }
+
     pub fn delete_backward(&mut self) {
         if let Some(doc) = self.workspace.current_mut() {
             if !doc.is_readonly() {

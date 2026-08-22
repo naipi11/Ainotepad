@@ -19,6 +19,7 @@ pub enum TextKey {
     EditCut,
     EditCopy,
     EditPaste,
+    EditDelete,
     EditSelectAll,
     EditIndent,
     FindOpen,
@@ -183,6 +184,7 @@ impl TextKey {
         Self::EditCut,
         Self::EditCopy,
         Self::EditPaste,
+        Self::EditDelete,
         Self::EditSelectAll,
         Self::EditIndent,
         Self::FindOpen,
@@ -379,6 +381,7 @@ fn english(key: TextKey) -> &'static str {
         TextKey::EditCut => "Cut",
         TextKey::EditCopy => "Copy",
         TextKey::EditPaste => "Paste",
+        TextKey::EditDelete => "Delete",
         TextKey::EditSelectAll => "Select All",
         TextKey::EditIndent => "Indent",
         TextKey::FindOpen => "Find",
@@ -509,7 +512,9 @@ fn english(key: TextKey) -> &'static str {
         TextKey::ShortcutsTitle => "Keyboard shortcuts",
         TextKey::ShortcutsFile => "Ctrl+N New · Ctrl+O Open · Ctrl+S Save · Ctrl+Shift+S Save As",
         TextKey::ShortcutsTabs => "Ctrl+W Close tab · Ctrl+Tab Next tab",
-        TextKey::ShortcutsEdit => "Ctrl+Z Undo · Ctrl+Y Redo · Ctrl+F Find · Ctrl+H Replace",
+        TextKey::ShortcutsEdit => {
+            "Ctrl+Z Undo · Ctrl+Y Redo · Ctrl+C Copy · Ctrl+X Cut · Ctrl+V Paste · Ctrl+A Select All · Ctrl+F Find · Ctrl+H Replace"
+        }
         TextKey::ShortcutsEditor => "Tab Indent/accept · Shift+Tab Unindent · Esc Dismiss",
         TextKey::ProviderDeepSeek => "DeepSeek",
         TextKey::ProviderOpenAi => "OpenAI",
@@ -548,6 +553,7 @@ fn simplified_chinese(key: TextKey) -> &'static str {
         TextKey::EditCut => "剪切",
         TextKey::EditCopy => "复制",
         TextKey::EditPaste => "粘贴",
+        TextKey::EditDelete => "删除",
         TextKey::EditSelectAll => "全选",
         TextKey::EditIndent => "缩进",
         TextKey::FindOpen => "查找",
@@ -674,7 +680,9 @@ fn simplified_chinese(key: TextKey) -> &'static str {
         TextKey::ShortcutsTitle => "键盘快捷键",
         TextKey::ShortcutsFile => "Ctrl+N 新建 · Ctrl+O 打开 · Ctrl+S 保存 · Ctrl+Shift+S 另存为",
         TextKey::ShortcutsTabs => "Ctrl+W 关闭标签页 · Ctrl+Tab 下一个标签页",
-        TextKey::ShortcutsEdit => "Ctrl+Z 撤销 · Ctrl+Y 重做 · Ctrl+F 查找 · Ctrl+H 替换",
+        TextKey::ShortcutsEdit => {
+            "Ctrl+Z 撤销 · Ctrl+Y 重做 · Ctrl+C 复制 · Ctrl+X 剪切 · Ctrl+V 粘贴 · Ctrl+A 全选 · Ctrl+F 查找 · Ctrl+H 替换"
+        }
         TextKey::ShortcutsEditor => "Tab 缩进/接受 · Shift+Tab 减少缩进 · Esc 关闭建议",
         TextKey::ProviderDeepSeek => "DeepSeek",
         TextKey::ProviderOpenAi => "OpenAI",
