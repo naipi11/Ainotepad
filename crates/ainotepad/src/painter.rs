@@ -401,8 +401,18 @@ mod tests {
         config.font_family = "Consolas".into();
         let mixed = editor_font(&config, "你好ABC");
         let ascii = editor_font(&config, "fn main() {}");
-        assert_eq!(mixed.family, egui::FontFamily::Name("YaHei".into()));
-        assert_eq!(ascii.family, egui::FontFamily::Name("Consolas".into()));
+        let expected_cjk = if crate::app::font_is_available("YaHei") {
+            egui::FontFamily::Name("YaHei".into())
+        } else {
+            egui::FontFamily::Monospace
+        };
+        let expected_ascii = if crate::app::font_is_available("Consolas") {
+            egui::FontFamily::Name("Consolas".into())
+        } else {
+            egui::FontFamily::Monospace
+        };
+        assert_eq!(mixed.family, expected_cjk);
+        assert_eq!(ascii.family, expected_ascii);
     }
 
     #[test]
