@@ -9,7 +9,7 @@ ainotepad-core = { path = "../ainotepad-core" }
 ainotepad-ai = { path = "../ainotepad-ai" }
 serde = { version = "1", features = ["derive"] }
 toml = "0.8"
-eframe = { version = "0.31", default-features = true }
+eframe = { version = "0.36", default-features = true }
 egui = "0.31"
 arboard = "3.6"
 rfd = "0.15"
