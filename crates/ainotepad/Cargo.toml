@@ -16,7 +16,7 @@ rfd = "0.15"
 image = { version = "0.25", default-features = false, features = ["png"] }
 
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.58", features = ["Win32_Foundation", "Win32_Globalization", "Win32_Security_Cryptography"] }
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_Globalization", "Win32_Security_Cryptography"] }
 
 [package.metadata.winres]
 OriginalFilename = "ainotepad.exe"
