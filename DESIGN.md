@@ -1,5 +1,5 @@
 ---
-name: Ainotepad
+name: Aitext
 description: Native Windows writing instrument with a theme-responsive Paper Cut shell and editor page.
 colors:
   base: "#101113"
@@ -48,13 +48,13 @@ components:
     rounded: "{rounded.control}"
 ---
 
-# Design System: Ainotepad
+# Design System: Aitext
 
 ## Overview
 
 **Creative North Star: "Paper Cut"**
 
-Paper Cut treats Ainotepad as a precise native Windows writing instrument: a stable rail-and-page structure follows the selected light or dark theme family while preserving the same hierarchy, spacing, and semantic colors. The shell is quiet by design so the document remains the visual subject.
+Paper Cut treats Aitext as a precise native Windows writing instrument: a stable rail-and-page structure follows the selected light or dark theme family while preserving the same hierarchy, spacing, and semantic colors. The shell is quiet by design so the document remains the visual subject.
 
 Meaning is intentionally scarce. Focus and navigation use blue, an available completion uses green, and the gutter uses a quiet neutral-gray divider with no semantic meaning. Simplified Chinese and English are complete interface modes, while product and protocol terms stay literal where recognition matters.
 
@@ -110,7 +110,7 @@ Chrome inherits the native egui/Windows fallback path rather than introducing a 
 
 ## Layout
 
-The native Windows title bar remains outside the application shell. Ainotepad opens at 1100 × 720 px, then the shell stacks a 36 px menu rail, a 34 px tab rail, the remaining editor area, and a 26 px status rail. Find/Replace appears as an inline raised rail above the editor rather than reducing the app to a floating-card composition.
+The native Windows title bar remains outside the application shell. Aitext opens at 1100 × 720 px, then the shell stacks a 36 px menu rail, a 34 px tab rail, the remaining editor area, and a 26 px status rail. Find/Replace appears as an inline raised rail above the editor rather than reducing the app to a floating-card composition.
 
 The editor owns all remaining space. Its compact 34 px gutter right-aligns line numbers 6 px before a translucent one-pixel gray divider. Document text, the initial caret, selections, IME anchoring, syntax colors, and ghost text begin 4 px after that divider.
 
@@ -146,7 +146,7 @@ The full editor uses the selected editor theme for its page and syntax palette. 
 
 ### Status Rail
 
-The 26 px `base` rail uses short separators and muted text for configured cursor, encoding, newline, language, profile/model, message, and custom items. The language item is an interactive Ainotepad document-type chip: new documents start at Markdown, while the popup groups text formats and programming languages. Only a suggested completion may use `ghost`.
+The 26 px `base` rail uses short separators and muted text for configured cursor, encoding, newline, language, profile/model, message, and custom items. The language item is an interactive Aitext document-type chip: new documents start at Markdown, while the popup groups text formats and programming languages. Only a suggested completion may use `ghost`.
 
 ### Find/Replace and Tool Windows
 

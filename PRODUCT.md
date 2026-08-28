@@ -16,11 +16,11 @@ A Windows user writing Chinese or English notes and light source files, often sw
 
 ## Product Purpose
 
-Ainotepad is a lightweight notepad with inline ghost-text completion. Saved profiles support DeepSeek, OpenAI, xAI, Anthropic, and custom endpoints through the adapter each endpoint requires. The core loop is open, type or IME-commit, preview one suggestion, accept with Tab or dismiss with Esc, then save normally.
+Aitext is a lightweight notepad with inline ghost-text completion. Saved profiles support DeepSeek, OpenAI, xAI, Anthropic, and custom endpoints through the adapter each endpoint requires. The core loop is open, type or IME-commit, preview one suggestion, accept with Tab or dismiss with Esc, then save normally.
 
 ## Positioning
 
-Not an IDE and not a chat sidebar. Ainotepad stays a single native process and treats completion as green preview text that never becomes document content until the user accepts it.
+Not an IDE and not a chat sidebar. Aitext stays a single native process and treats completion as green preview text that never becomes document content until the user accepts it.
 
 ## Operating Context
 
@@ -37,7 +37,7 @@ The Paper Cut structure remains stable while its chrome follows the selected lig
 
 ## Brand Commitments
 
-Name: Ainotepad. Voice: concise, technical, and consistently localized. The visual signature is a precise neutral instrument around the page, a blue focus line, a compact neutral-gray gutter divider, and green completion text. Do not copy Helix or Notepad++ source.
+Name: Aitext. Voice: concise, technical, and consistently localized. The visual signature is a precise neutral instrument around the page, a blue focus line, a compact neutral-gray gutter divider, and green completion text. Do not copy Helix or Notepad++ source.
 
 ## Product Principles
 

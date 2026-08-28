@@ -9,7 +9,7 @@
 
 ## Reporting a vulnerability
 
-Please report security vulnerabilities through [GitHub private vulnerability reporting](https://github.com/naipi11/Ainotepad/security/advisories/new).
+Please report security vulnerabilities through [GitHub private vulnerability reporting](https://github.com/naipi11/Aitext/security/advisories/new).
 
 Do not open a public issue for an unpatched vulnerability. Private reports let us investigate, prepare a fix, and coordinate disclosure without exposing users before a fix is available.
 

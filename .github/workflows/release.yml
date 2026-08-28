@@ -1,4 +1,4 @@
-name: Ainotepad Release
+name: Aitext Release
 
 on:
   push:
@@ -29,8 +29,8 @@ jobs:
               throw "Missing English release notes: release-notes/$tag.md"
             }
           } else {
-            $tag = 'v0.1.0'
-            $version = '0.1.0'
+            $tag = 'v0.2.0'
+            $version = '0.2.0'
           }
           "RELEASE_TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
@@ -43,7 +43,7 @@ jobs:
       - name: Run workspace tests
         run: cargo test --workspace -- --test-threads=1
       - name: Build release executable
-        run: cargo build --release -p ainotepad
+        run: cargo build --release -p aitext
       - name: Install Inno Setup
         shell: pwsh
         run: choco install innosetup --no-progress --yes
@@ -53,15 +53,15 @@ jobs:
           $iscc = Get-ChildItem 'C:\Program Files (x86)\Inno Setup *\ISCC.exe' | Select-Object -First 1
           if ($null -eq $iscc) { throw 'ISCC.exe was not found after installing Inno Setup.' }
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          & $iscc.FullName "/DMyAppVersion=$env:RELEASE_VERSION" packaging/windows/Ainotepad.iss
+          & $iscc.FullName "/DMyAppVersion=$env:RELEASE_VERSION" packaging/windows/Aitext.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build portable ZIP
         shell: pwsh
         run: |
-          $portable = "dist/Ainotepad-Portable-$env:RELEASE_VERSION-win-x64"
-          $archive = "dist/Ainotepad-Portable-$env:RELEASE_VERSION-win-x64.zip"
+          $portable = "dist/Aitext-Portable-$env:RELEASE_VERSION-win-x64"
+          $archive = "dist/Aitext-Portable-$env:RELEASE_VERSION-win-x64.zip"
           New-Item -ItemType Directory -Force -Path $portable | Out-Null
-          Copy-Item target/release/ainotepad.exe $portable/ainotepad.exe
+          Copy-Item target/release/aitext.exe $portable/aitext.exe
           Copy-Item LICENSE $portable/LICENSE
           Copy-Item README.md $portable/README.md
           Copy-Item README.zh-CN.md $portable/README.zh-CN.md
@@ -70,29 +70,29 @@ jobs:
         shell: pwsh
         run: |
           Get-ChildItem dist -File |
-            Where-Object { $_.Name -like 'Ainotepad-Setup-*.exe' -or $_.Name -like 'Ainotepad-Portable-*.zip' } |
+            Where-Object { $_.Name -like 'Aitext-Setup-*.exe' -or $_.Name -like 'Aitext-Portable-*.zip' } |
             Get-FileHash -Algorithm SHA256 |
             ForEach-Object { '{0}  {1}' -f $_.Hash.ToLowerInvariant(), $_.Path.Replace((Resolve-Path dist).Path + '\', '') } |
             Set-Content -Encoding ascii dist/SHA256SUMS.txt
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Ainotepad-${{ github.ref_name }}-windows
+          name: Aitext-${{ github.ref_name }}-windows
           path: |
-            dist/Ainotepad-Setup-*-win-x64.exe
-            dist/Ainotepad-Portable-*-win-x64.zip
+            dist/Aitext-Setup-*-win-x64.exe
+            dist/Aitext-Portable-*-win-x64.zip
             dist/SHA256SUMS.txt
           if-no-files-found: error
       - name: Publish GitHub Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          name: Ainotepad ${{ github.ref_name }}
+          name: Aitext ${{ github.ref_name }}
           body_path: release-notes/${{ github.ref_name }}.md
           draft: false
           prerelease: false
           fail_on_unmatched_files: true
           files: |
-            dist/Ainotepad-Setup-*-win-x64.exe
-            dist/Ainotepad-Portable-*-win-x64.zip
+            dist/Aitext-Setup-*-win-x64.exe
+            dist/Aitext-Portable-*-win-x64.zip
             dist/SHA256SUMS.txt

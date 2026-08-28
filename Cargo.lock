@@ -130,11 +130,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "ainotepad"
-version = "0.1.0"
+name = "aitext"
+version = "0.2.0"
 dependencies = [
- "ainotepad-ai",
- "ainotepad-core",
+ "aitext-ai",
+ "aitext-core",
  "arboard",
  "eframe",
  "egui",
@@ -147,18 +147,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "ainotepad-ai"
-version = "0.1.0"
+name = "aitext-ai"
+version = "0.2.0"
 dependencies = [
- "ainotepad-core",
+ "aitext-core",
  "reqwest",
  "serde",
  "serde_json",
 ]
 
 [[package]]
-name = "ainotepad-core"
-version = "0.1.0"
+name = "aitext-core"
+version = "0.2.0"
 dependencies = [
  "encoding_rs",
  "ropey",

@@ -31,4 +31,4 @@ jobs:
       - name: Run workspace tests
         run: cargo test --workspace -- --test-threads=1
       - name: Build release executable
-        run: cargo build --release -p ainotepad
+        run: cargo build --release -p aitext

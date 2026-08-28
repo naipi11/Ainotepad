@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="crates/ainotepad/assets/ainotepad-icon.png" alt="Ainotepad 图标" width="128">
+  <img src="crates/aitext/assets/aitext-icon.png" alt="Aitext 图标" width="128">
 </p>
 
-<h1 align="center">Ainotepad</h1>
+<h1 align="center">Aitext</h1>
 
 <p align="center">
   <strong>光标处的幽灵字补全。</strong><br>
@@ -14,11 +14,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/naipi11/Ainotepad/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/naipi11/Ainotepad/ci.yml?branch=main&label=CI&logo=github"></a>
-  <a href="https://github.com/naipi11/Ainotepad/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/naipi11/Ainotepad?display_name=tag&sort=semver&label=release"></a>
-  <a href="https://github.com/naipi11/Ainotepad/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/naipi11/Ainotepad?style=flat&label=stars&logo=github"></a>
-  <a href="https://github.com/naipi11/Ainotepad/releases"><img alt="下载量" src="https://img.shields.io/github/downloads/naipi11/Ainotepad/total?label=downloads"></a>
-  <a href="LICENSE"><img alt="许可证：MIT" src="https://img.shields.io/github/license/naipi11/Ainotepad?label=license"></a>
+  <a href="https://github.com/naipi11/Aitext/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/naipi11/Aitext/ci.yml?branch=main&label=CI&logo=github"></a>
+  <a href="https://github.com/naipi11/Aitext/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/naipi11/Aitext?display_name=tag&sort=semver&label=release"></a>
+  <a href="https://github.com/naipi11/Aitext/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/naipi11/Aitext?style=flat&label=stars&logo=github"></a>
+  <a href="https://github.com/naipi11/Aitext/releases"><img alt="下载量" src="https://img.shields.io/github/downloads/naipi11/Aitext/total?label=downloads"></a>
+  <a href="LICENSE"><img alt="许可证：MIT" src="https://img.shields.io/github/license/naipi11/Aitext?label=license"></a>
 </p>
 
 <p align="center">
@@ -30,24 +30,24 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/naipi11/Ainotepad/releases/latest"><strong>下载 Windows 版本</strong></a>
+  <a href="https://github.com/naipi11/Aitext/releases/latest"><strong>下载 Windows 版本</strong></a>
   · <a href="#quick-start--快速开始">快速开始</a>
   · <a href="#star-history--star-history">Star History</a>
 </p>
 
-![Ainotepad Paper Cut](docs/media/hero-zh-CN.png)
+![Aitext Paper Cut](docs/media/hero-zh-CN.png)
 
-![Ainotepad 幽灵字演示](docs/media/demo-zh-CN.gif)
+![Aitext 幽灵字演示](docs/media/demo-zh-CN.gif)
 
-Ainotepad 是一款轻量级 Windows 原生文本/代码编辑器，在光标处提供一条幽灵字补全建议。它保持编辑区清晰，支持中文输入法，并通过配置文件连接大模型，不扩展成 IDE 或聊天侧栏。
+Aitext 是一款轻量级 Windows 原生文本/代码编辑器，在光标处提供一条幽灵字补全建议。它保持编辑区清晰，支持中文输入法，并通过配置文件连接大模型，不扩展成 IDE 或聊天侧栏。
 
 ## Quick Start / 快速开始
 
 ### 安装
 
-下载 [Ainotepad 安装包](https://github.com/naipi11/Ainotepad/releases/latest/download/Ainotepad-Setup-0.1.0-win-x64.exe)，或使用[便携版 ZIP](https://github.com/naipi11/Ainotepad/releases/latest/download/Ainotepad-Portable-0.1.0-win-x64.zip)。
+下载 [Aitext 安装包](https://github.com/naipi11/Aitext/releases/latest/download/Aitext-Setup-0.2.0-win-x64.exe)，或使用[便携版 ZIP](https://github.com/naipi11/Aitext/releases/latest/download/Aitext-Portable-0.2.0-win-x64.zip)。
 
-v0.1.0 安装包未进行代码签名，Windows SmartScreen 可能显示“未知发布者”提示。需要时可使用 [SHA256SUMS.txt](https://github.com/naipi11/Ainotepad/releases/latest/download/SHA256SUMS.txt) 校验下载文件。
+v0.2.0 安装包未进行代码签名，Windows SmartScreen 可能显示“未知发布者”提示。需要时可使用 [SHA256SUMS.txt](https://github.com/naipi11/Aitext/releases/latest/download/SHA256SUMS.txt) 校验下载文件。
 
 ### 配置模型服务
 
@@ -78,8 +78,8 @@ v0.1.0 安装包未进行代码签名，Windows SmartScreen 可能显示“未�
 ## Star History / Star History
 
 <p align="center">
-  <a href="https://star-history.com/#naipi11/Ainotepad&Date">
-    <img src="https://api.star-history.com/svg?repos=naipi11/Ainotepad&type=Date" alt="Star History Chart">
+  <a href="https://star-history.com/#naipi11/Aitext&Date">
+    <img src="https://api.star-history.com/svg?repos=naipi11/Aitext&type=Date" alt="Star History Chart">
   </a>
 </p>
 
@@ -89,14 +89,14 @@ v0.1.0 安装包未进行代码签名，Windows SmartScreen 可能显示“未�
 
 ```powershell
 cargo test --workspace -- --test-threads=1
-cargo build --release -p ainotepad
+cargo build --release -p aitext
 ```
 
-便携版可执行文件位于 `target/release/ainotepad.exe`。
+便携版可执行文件位于 `target/release/aitext.exe`。
 
 ## 项目边界
 
-Ainotepad 有意保持专注，不包含文件树、LSP、调试器、终端、插件系统、迷你地图、多光标编辑、聊天侧栏、Copilot 登录或运行时翻译下载。
+Aitext 有意保持专注，不包含文件树、LSP、调试器、终端、插件系统、迷你地图、多光标编辑、聊天侧栏、Copilot 登录或运行时翻译下载。
 
 ## 许可证
 

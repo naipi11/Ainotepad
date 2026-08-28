@@ -1,10 +1,10 @@
-# Ainotepad v0.1.0 replacement execution
+# Aitext v0.2 continuation execution
 
-## Current mission: Ainotepad v0.1.0 direct replacement
+## Current mission: Aitext reliable inline completion
 
-The active release plan is [docs/superpowers/plans/2026-08-20-ainotepad-v0.1.0-replacement.md](docs/superpowers/plans/2026-08-20-ainotepad-v0.1.0-replacement.md). User-approved decisions: direct Aitext → Ainotepad replacement, numeric version remains v0.1.0, Markdown-default document types, unified mixed-script layout, unsigned installer strategy, Paper Cut bilingual media, and no desktop automation. Current phase: Ainotepad v0.1.0 published and verified; final handoff complete.
+The workspace now targets the user-requested Aitext identity: a lightweight Windows text/notepad editor with provider-agnostic ghost-text completion. The current continuation hardens bounded context capture, streaming deltas, language-aware shaping, and safe migration from the previous local Ainotepad build. The v0.2 implementation remains local and uncommitted until release verification is complete.
 
-Release phases: core language/highlighting → shared editor layout → document-type selector → Ainotepad package/config rename → docs/media/package → RC workflow proof → repository rename/main replacement/old Release replacement → final handoff. All phases are complete.
+Completed foundation: core document editing → Paper Cut shell → language selector/highlighting → provider profiles → bounded completion context → streaming ghost text → Aitext package/config identity. Current work continues with performance and release validation.
 
 ## Goal
 

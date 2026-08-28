@@ -1,8 +1,8 @@
-# Ainotepad showcase media
+# Aitext showcase media
 
-The Paper Cut base scene was generated with the built-in image generation tool and refined from the approved `ainotepad-hero.png` reference. The prompt required a matte black/white paper split, a compact editor instrument, blue focus, green ghost text, a neutral gray divider, no orange line, and no watermark. The final editor text is intentionally explicit rather than abstract: each language variant shows a natural-language ghost continuation and a Python `print("Hello, World!")` completion.
+The Paper Cut base scene was generated with the built-in image generation tool and refined from the approved `aitext-hero.png` reference. The prompt required a matte black/white paper split, a compact editor instrument, blue focus, green ghost text, a neutral gray divider, no orange line, and no watermark. The final editor text is intentionally explicit rather than abstract: each language variant shows a natural-language ghost continuation and a Python `print("Hello, World!")` completion.
 
-- `ainotepad-paper-cut-base.png`: generated base scene kept for provenance.
+- `aitext-paper-cut-base.png`: generated base scene kept for provenance.
 - `hero-en.png`: English Paper Cut hero with a short readable sentence suggestion and `print("Hello, World!")` inside the editor.
 - `hero-zh-CN.png`: Simplified Chinese Paper Cut hero with `今天的天气` plus a green continuation and the same Python completion.
 - `demo-en.gif`: 32-frame, 8 fps English editor showcase where the sentence ghost text appears first and `"Hello, World!")` then completes after the typed `print(` prefix, 1200×675.
